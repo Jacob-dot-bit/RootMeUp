@@ -1,0 +1,29 @@
+# Environnements et secrets
+.env
+.env.*
+**/*.env
+!**/.env.example
+
+# Logs
+*.log
+logs/
+
+# Caches / builds courants
+__pycache__/
+*.py[cod]
+node_modules/
+dist/
+build/
+.next/
+.turbo/
+
+# Docker
+*.pid
+*.pid.lock
+docker-data/
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
