@@ -101,7 +101,6 @@ spec:
             - secretRef:
                 name: challenge-web-secrets
 
-
 ## 🔗 Accès
 - Interface CTFd : http://localhost:8000 (ou derrière votre proxy TLS)
 - Soumission des flags : via l’UI CTFd
