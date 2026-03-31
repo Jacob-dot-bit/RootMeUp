@@ -1,0 +1,24 @@
+# Fichiers générés au build Docker (recréés automatiquement)
+challenge/memory.dmp
+challenge/network_capture.pcap
+challenge/hints.txt
+
+# Export Docker (trop lourd pour git)
+*.tar
+*.tar.gz
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Fichiers extraits/générés localement
+dump_out/
+extracted/
+
+# Éditeur
+.vscode/
+*.swp
+*.swo

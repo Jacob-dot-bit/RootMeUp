@@ -1,0 +1,30 @@
+# Environnement virtuel local
+venv/
+.venv/
+
+# Solution complète (ne pas embarquer dans l'image joueur)
+solution/SOLUTION.md
+
+# Fichiers Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Git
+.git/
+.gitignore
+
+# Éditeur
+.vscode/
+*.swp
+*.swo
+
+# Fichiers générés localement (seront recréés dans le build)
+challenge/
+dump_out/
+extracted/
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
