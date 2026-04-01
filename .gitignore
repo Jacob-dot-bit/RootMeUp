@@ -21,6 +21,7 @@ build/
 *.pid
 *.pid.lock
 docker-data/
+*.tar
 
 # OS / éditeurs
 .DS_Store

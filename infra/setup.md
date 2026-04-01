@@ -18,7 +18,7 @@
 
 ```powershell
 # Depuis PowerShell (Windows)
-scp -i "C:\Users\Admin\.ssh\Projet Annuel\jakub_ssh_key" ".\mon-challenge.tar" jakub@<IP_TAILSCALE_VM>:/tmp/
+scp -i "<SSH_KEY_PATH>" ".\mon-challenge.tar" jakub@<IP_TAILSCALE_VM>:/tmp/
 ```
 
 Sur le serveur :

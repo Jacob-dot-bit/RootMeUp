@@ -21,7 +21,7 @@ docker run -it --rm -p 8000:8000 blue-team-memory-forensics:latest
 ## 3) Export et transfert vers le serveur
 ```bash
 docker save -o blue-team-memory-forensics.tar blue-team-memory-forensics:latest
-scp -i "C:\Users\Admin\.ssh\Projet Annuel\jakub_ssh_key" ".\blue-team-memory-forensics.tar" jakub@100.110.162.83:/tmp/
+scp -i "<SSH_KEY_PATH>" ".\blue-team-memory-forensics.tar" jakub@<IP_TAILSCALE_VM>:/tmp/
 ```
 
 ## 4) Import sur le serveur
