@@ -9,6 +9,8 @@ Plateforme CTF open-source pour étudiants et professionnels cybersécurité. Ch
 
 ## Architecture
 
+![Schéma d'architecture](docs/diagram.png)
+
 Le serveur est une VM Debian durcie selon le benchmark CIS, qui héberge :
 - **CTFd** : géré comme un service systemd, accessible sur le port 8000
 - **Docker** : utilisé pour construire et stocker les images des challenges
