@@ -30,3 +30,6 @@ Thumbs.db
 
 # Claude Code (local uniquement)
 .claude/
+
+# Scripts de génération (local uniquement)
+docs/generate_diagram.py
