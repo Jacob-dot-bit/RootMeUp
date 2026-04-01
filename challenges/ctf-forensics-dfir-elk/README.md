@@ -1,5 +1,5 @@
 # Blue Team CTF – DFIR Incident CORP.LOCAL
-### Challenge Evan – Forensique via SIEM / ELK
+### Challenge Sarah – Forensique via SIEM / ELK
 
 ## Documentation
 - Guide joueur : `docs/USER_GUIDE.md`
@@ -66,4 +66,4 @@ Ce challenge est conçu à des fins **éducatives uniquement**. Les techniques p
 
 ---
 
-*Blue Team CTF – Evan – ESGI Projet Annuel 2026*
+*Blue Team CTF – Sarah – ESGI Projet Annuel 2026*
