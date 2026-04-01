@@ -1,18 +1,37 @@
 # Installation et déploiement
 
 ## Prérequis
-- 2 VM (VM1 pour CTFd, VM2 pour challenges)
-- Docker + Docker Compose
-- Kubernetes (minikube ou cluster école)
-- Accès SSH par clé uniquement
+- Une VM Debian (durcie selon le benchmark CIS)
+- Docker et containerd installés
+- Tailscale installé sur la VM
+- Accès SSH par clé uniquement (connexion root interdite)
 
-## Étapes futures
-1. Durcissement des VM (SSH, iptables, fail2ban) [en cours]
-2. Installation CTFd sur VM1
-3. Déploiement Kubernetes sur VM1/VM2
-4. Scripts de backup PRA
+## Étapes de déploiement
 
-## Fichiers à venir
-- `docker-compose.yml` : CTFd + base de données
-- `k8s/` : manifests pour challenges
-- `scripts/` : durcissement + backups
+1. **Durcissement du serveur** (SSH, iptables, fail2ban, auditd, unattended-upgrades)
+2. **Installation de CTFd** comme service systemd (port 8000)
+3. **Installation du plugin** [CTFdDockerContainersPlugin](https://github.com/Bigyls/CTFdDockerContainersPlugin) dans CTFd
+4. **Chargement des images Docker** des challenges sur le serveur
+5. **Création des challenges** dans CTFd (type `container`) avec image, port et commande
+
+## Transfert d'une image Docker vers le serveur
+
+```powershell
+# Depuis PowerShell (Windows)
+scp -i "C:\Users\Admin\.ssh\Projet Annuel\jakub_ssh_key" ".\mon-challenge.tar" jakub@<IP_TAILSCALE_VM>:/tmp/
+```
+
+Sur le serveur :
+
+```bash
+docker load -i /tmp/mon-challenge.tar
+docker images | grep mon-challenge
+```
+
+## Accès au serveur
+
+L'accès se fait via Tailscale. Rejoindre le réseau avec le lien d'invitation, puis :
+
+```bash
+ssh -i "chemin/vers/cle_privee" jakub@<IP_TAILSCALE_VM>
+```
