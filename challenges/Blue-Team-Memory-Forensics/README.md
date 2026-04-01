@@ -30,6 +30,9 @@ Blue-Team-Memory-Forensics/
 │   ├── memory.dmp                     ← Dump mémoire à analyser
 │   ├── network_capture.pcap           ← Capture réseau bonus
 │   └── hints.txt                      ← Indices (si besoin)
+├── docs/
+│   ├── USER_GUIDE.md                  ← Guide joueur
+│   └── ADMIN_DEPLOYMENT.md            ← Guide admin et déploiement
 ├── tools/
 │   ├── vol_analyzer.py                ← Outil d'analyse (mini-Volatility)
 │   └── extract_strings.py             ← Extracteur de chaînes
