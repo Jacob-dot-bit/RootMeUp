@@ -28,3 +28,6 @@ Thumbs.db
 .vscode/
 .idea/
 
+
+# Scripts de génération (local uniquement)
+docs/generate_diagram.py
