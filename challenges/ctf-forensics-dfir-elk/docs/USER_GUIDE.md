@@ -102,4 +102,4 @@ Exemple : `FLAG{192.168.10.45}`
 
 ## Bon courage !
 
-*Blue Team CTF – ESGI Projet Annuel 2026*
+*Blue Team CTF – Sarah – ESGI Projet Annuel 2026*
