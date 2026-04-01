@@ -3,29 +3,38 @@
 # Architecture RootMeUp
 
 ## Composants
-- **CTFd** : interface web pour les joueurs, gestion des équipes, scores, flags.
-- **Containers de challenges** : un conteneur par challenge (Blue/Red), isolement réseau par challenge.
-- **Base de données** : stockage CTFd (scores, utilisateurs, flags), sauvegardes régulières.
-- **Reverse proxy** (optionnel) : terminaison TLS et routage vers CTFd et les challenges.
+
+- **CTFd** : interface web pour les joueurs, gestion des équipes, scores et flags. Géré comme un service systemd sur le port 8000.
+- **containerd** : runtime de conteneurs, exécute les instances de challenges et fait le lien avec CTFd.
+- **Docker** : utilisé pour construire et stocker les images des challenges.
+- **CTFdDockerContainersPlugin** : plugin CTFd qui déclenche via containerd la création d'une instance isolée par équipe lors du lancement d'un challenge.
+- **Tailscale** : réseau privé virtuel permettant l'accès sécurisé à la plateforme sans exposer le serveur sur Internet.
+
+## Infrastructure
+
+Une seule VM Debian, durcie selon le benchmark CIS, héberge l'ensemble des services :
+- CTFd (systemd, port 8000)
+- Docker + containerd
+- Les images des challenges (chargées localement)
 
 ## Flux réseau
-- Joueurs → CTFd (HTTP/HTTPS) pour l’authentification, la consultation des challenges et la soumission des flags.
-- CTFd → containers de challenges : exposition contrôlée des ports nécessaires à chaque challenge.
-- Administration → CTFd et hôtes d’infra pour gestion/maintenance.
+
+- **Joueurs → CTFd** (via Tailscale, port 8000) : authentification, consultation des challenges, soumission des flags.
+- **CTFd → containerd** : le plugin crée une instance Docker par équipe à la demande.
+- **Joueurs → instance du challenge** : connexion directe au port exposé par le conteneur.
+- **Administrateurs → VM** : accès SSH par clé via Tailscale.
 
 ## Sécurité et isolation
-- Un conteneur par challenge, réseau dédié pour limiter les mouvements latéraux.
-- Secrets/flags stockés côté serveur (CTFd) et injectés au runtime dans les conteneurs de challenge.
-- Limitation des ports exposés, utilisation de TLS côté frontal (proxy ou CTFd).
-- Journalisation des accès (CTFd) et des conteneurs, conservation pour analyse.
+
+- Un conteneur par équipe et par challenge, réseau dédié pour limiter les mouvements latéraux.
+- Flags stockés côté serveur (CTFd) et injectés au runtime dans les conteneurs.
+- Accès SSH par clé uniquement, connexion root interdite.
+- Pare-feu `iptables`, `Fail2Ban`, `auditd`, `unattended-upgrades`.
+- Accès à la plateforme restreint au réseau Tailscale.
 
 ## Exploitation
-- Démarrage : déployer CTFd, la base, puis les conteneurs de challenges.
-- Sauvegardes : base CTFd + configuration; prévoir restauration régulière.
-- Rotation des flags : renouveler périodiquement les secrets et redéployer les conteneurs concernés.
-- Supervision : surveiller disponibilité CTFd, charge des hôtes, et erreurs applicatives.
 
-## Pistes d’amélioration
-- Ajouter un environnement de préprod pour tester de nouveaux challenges.
-- Renforcer la protection DDoS et le rate limiting sur le frontal.
-- Documenter un playbook d’exploitation (backup/restore, rotation de secrets, mises à jour).
+- Démarrage CTFd : `sudo systemctl start ctfd`
+- Chargement d'une image : `docker load -i /tmp/image.tar`
+- Vérification des conteneurs actifs : `docker ps`
+- Vérification du port CTFd : `ss -tlnp | grep 8000`
