@@ -27,3 +27,6 @@ docker-data/
 Thumbs.db
 .vscode/
 .idea/
+
+# Claude Code (local uniquement)
+.claude/
