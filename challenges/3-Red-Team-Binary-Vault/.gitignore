@@ -1,0 +1,7 @@
+# Artefacts generes au build -- ne pas committer.
+secret.h
+flag1.txt
+flag2.txt
+vault
+*.o
+__pycache__/
