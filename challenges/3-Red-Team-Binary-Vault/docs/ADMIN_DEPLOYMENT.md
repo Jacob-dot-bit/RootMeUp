@@ -12,19 +12,39 @@
 
 Les secrets (licence, flags) sont générés au build par `setup/gen_secret.py` et **ne sont pas embarqués** dans le binaire (lus depuis `/challenge/flag*.txt` au runtime). `strings vault` ne révèle donc rien.
 
+> ✅ **Validé bout-en-bout en conteneur Docker le 20/07/2026** : build OK,
+> service accessible sur 9003, exploit `solution/exploit.py` récupère les 2 flags.
+
+## Prérequis / pièges courants
+
+- **Compose v1 vs v2** : `docker compose` (avec espace) n'existe qu'avec le plugin v2.
+  Sur Kali/Debian, le paquet `docker-compose` (2.40.x) fournit la commande
+  **`docker-compose`** (avec tiret). Si `docker compose up --build` renvoie
+  `unknown flag: --build`, utilisez `docker-compose` ou la méthode build/run manuelle ci-dessous.
+- **Droits Docker** : si le user n'est pas dans le groupe `docker`, préfixer chaque
+  commande par `sudo` (sinon `permission denied ... /var/run/docker.sock`).
+
 ## Build & test local
 
 ```bash
 cd challenges/3-Red-Team-Binary-Vault
-docker compose up --build -d
+docker-compose up --build -d      # ou : docker compose up --build -d (plugin v2)
 # le service écoute sur le port 9003
 nc 127.0.0.1 9003
+```
+
+Sans Compose (marche partout) :
+
+```bash
+docker build -t rt3-vault .
+docker run -d -p 9003:9003 --name rt3-vault rt3-vault
 ```
 
 Test automatique de la solution :
 
 ```bash
-# extraire le binaire de l'image (voir plus bas) dans solution/, puis :
+# extraire le binaire de l'image dans solution/, puis lancer l'exploit :
+docker cp rt3-vault:/challenge/vault solution/vault
 cd solution && python3 exploit.py 127.0.0.1 9003
 ```
 
