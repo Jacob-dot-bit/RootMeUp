@@ -68,4 +68,4 @@ Sortie attendue :
 [+] Flag 2 : RM{r3t2w1n_l4_v4ult_3st_0uv3rt3}
 ```
 
-> Testé et validé le 20/07/2026 : chaîne complète fonctionnelle (offset 72, gadget `ret` pour l'alignement, ret2win vers `vault`).
+> Testé et validé le 20/07/2026, **en conteneur Docker** : build OK, chaîne complète fonctionnelle (offset 72, gadget `ret` pour l'alignement, ret2win vers `vault` @ `0x401334`). Les 2 flags sont récupérés par `exploit.py`.
