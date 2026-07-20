@@ -15,6 +15,35 @@ Les secrets (licence, flags) sont générés au build par `setup/gen_secret.py` 
 > ✅ **Validé bout-en-bout en conteneur Docker le 20/07/2026** : build OK,
 > service accessible sur 9003, exploit `solution/exploit.py` récupère les 2 flags.
 
+## Fournir les flags (ne PAS les committer)
+
+Les vrais flags **ne sont plus stockés dans le dépôt**. Avant de builder, fournissez-les
+par l'un des deux moyens (l'environnement a priorité sur le fichier) :
+
+**Option A — fichier `challenge.env` (recommandé)**
+```bash
+cd challenges/3-Red-Team-Binary-Vault/setup
+cp challenge.env.example challenge.env
+$EDITOR challenge.env          # renseigner LICENSE, FLAG1, FLAG2
+```
+`challenge.env` est gitignoré : il ne partira jamais dans git. Il est inclus dans le
+contexte de build et lu automatiquement par `gen_secret.py`.
+
+**Option B — build-args / variables d'environnement**
+```bash
+docker build -t rt3-vault \
+  --build-arg LICENSE='...' --build-arg FLAG1='RM{...}' --build-arg FLAG2='RM{...}' .
+# ou, avec docker-compose : export FLAG1=... FLAG2=... LICENSE=... puis docker-compose build
+```
+
+Si aucune source n'est fournie, le build **réussit quand même** mais avec des flags
+**placeholders** (`RM{PLACEHOLDER_...}`) et un avertissement — utile pour un test à blanc,
+inutilisable en prod.
+
+> ⚠️ **Rotation** : les flags d'origine ont été committés publiquement avant ce changement.
+> Ils restent visibles dans l'historique git. Choisissez de **nouveaux flags** dans
+> `challenge.env` (et mettez-les à jour dans CTFd) pour que les anciens deviennent inutiles.
+
 ## Prérequis / pièges courants
 
 - **Compose v1 vs v2** : `docker compose` (avec espace) n'existe qu'avec le plugin v2.

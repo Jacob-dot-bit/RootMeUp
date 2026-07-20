@@ -1,3 +1,6 @@
+# Secrets reels du challenge -- ne JAMAIS committer (voir challenge.env.example)
+challenge.env
+
 # Artefacts generes au build -- ne pas committer.
 secret.h
 flag1.txt
