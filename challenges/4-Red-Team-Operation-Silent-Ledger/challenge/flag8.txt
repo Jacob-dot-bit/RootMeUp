@@ -1,0 +1,6 @@
+flag: MERIDIAN{0rch3str4t0r_pwn3d_88af0d}
+
+You achieved arbitrary command execution as root via the orchestrator's
+"restore_config" endpoint (insecure deserialization / pickle.loads on
+attacker-controlled input). The remaining secrets are still encrypted
+at rest though -- defense in depth doesn't stop at the perimeter.
