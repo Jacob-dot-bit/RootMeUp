@@ -20,7 +20,7 @@ L'investigation préliminaire suggère que **l'attaquant a déployé un implant 
 ## 📁 Structure du Challenge
 
 ```
-Blue-Team-Memory-Forensics/
+2-Blue-Team-Memory-Forensics/
 ├── README.md                          ← Vous êtes ici
 ├── Dockerfile                         ← Image du challenge
 ├── docker-compose.yml                 ← Orchestration Docker
