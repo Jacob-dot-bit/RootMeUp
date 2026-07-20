@@ -4,10 +4,6 @@
 **/*.env
 !**/.env.example
 
-# Logs
-*.log
-logs/
-
 # Caches / builds courants
 __pycache__/
 *.py[cod]
