@@ -1,0 +1,9 @@
+# Deploiement local pour tests. En production, le plugin
+# CTFdDockerContainersPlugin gere l'allocation dynamique du port.
+services:
+  vault:
+    build: .
+    container_name: rt3-vault
+    ports:
+      - "9003:9003"
+    restart: unless-stopped

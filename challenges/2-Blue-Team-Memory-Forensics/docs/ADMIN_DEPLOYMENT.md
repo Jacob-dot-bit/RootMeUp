@@ -1,7 +1,7 @@
 # Blue Team Memory Forensics - Guide Admin/Deploiement
 
 ## 1) Build de l'image
-Depuis `Challenge/Blue-Team-Memory-Forensics`:
+Depuis `challenges/2-Blue-Team-Memory-Forensics`:
 
 ```bash
 docker build -t blue-team-memory-forensics:latest .
