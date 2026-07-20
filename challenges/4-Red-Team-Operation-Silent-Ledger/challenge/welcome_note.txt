@@ -1,0 +1,10 @@
+Welcome to Meridian Capital, j.martin!
+
+IT onboarding checklist:
+  [x] Laptop provisioned
+  [x] VPN access
+  [ ] Read the internal security policy (ask your manager)
+
+Ticket MER-2291: "please stop leaving debug notes in your home dir" - IT
+
+flag: MERIDIAN{f1rst_st3ps_1nt0_th3_n3tw0rk_3a1c9d}
