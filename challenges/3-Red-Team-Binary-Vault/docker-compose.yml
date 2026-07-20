@@ -2,7 +2,15 @@
 # CTFdDockerContainersPlugin gere l'allocation dynamique du port.
 services:
   vault:
-    build: .
+    build:
+      context: .
+      # Optionnel : surcharge les secrets via l'environnement du shell.
+      # Sinon, gen_secret.py lit setup/challenge.env (voir .env.example).
+      args:
+        LICENSE: ${LICENSE:-}
+        FLAG1: ${FLAG1:-}
+        FLAG2: ${FLAG2:-}
+        XOR_KEY: ${XOR_KEY:-}
     container_name: rt3-vault
     ports:
       - "9003:9003"
