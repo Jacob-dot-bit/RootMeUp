@@ -29,18 +29,16 @@
 ### 1.1 Structure du projet
 
 ```
-ctf-forensics-dfir-elk/
-├── README.md                  ← Présentation du challenge
-├── Dockerfile                 ← Image du challenge (ELK tout-en-un)
-├── GUIDE_DEPLOIEMENT.md       ← Vous êtes ici
-├── supervisord.conf           ← Orchestration des services ELK
+ctf-elk/
+├── Dockerfile            ← image du challenge ELK
 ├── pipeline/
-│   └── logstash.conf          ← Pipeline d'ingestion des logs
-├── init/
-│   ├── inject_logs.py         ← Injection des logs dans Elasticsearch
-│   └── import_kibana.sh       ← Import des index patterns Kibana
-└── docs/
-    └── USER_GUIDE.md          ← Guide joueur
+│   └── logstash.conf
+├── logs/
+│   └── corp_incident.json
+├── kibana/
+│   └── kibana.yml
+└── init/
+    └── import_kibana.sh
 ```
 
 ### 1.2 Dockerfile du challenge (image self-contained)
