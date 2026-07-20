@@ -15,19 +15,39 @@ Analyser un dump mémoire Windows compromis pour identifier le processus malveil
    http://<instance>:8000/hints.txt
    ```
 
-## Outils recommandés (sur votre machine)
-- **Volatility3** — analyse du dump mémoire (`vol.py`)
-- **strings** — extraction de chaînes depuis un binaire
-- **Wireshark** — analyse du PCAP réseau
-- Ghidra / Radare2 (optionnel, pour l'analyse binaire avancée)
+## Outils d'analyse
+
+> ⚠️ **Important** : le dump `memory.dmp` est dans un **format pédagogique dédié à ce
+> challenge**, pas une image mémoire brute standard. Le vrai Volatility 3 (`vol.py`) ne
+> sait pas le lire, et un `strings` classique ne révèle pas le flag (il est encodé).
+> Utilisez l'**outil fourni dans le conteneur** : `tools/vol_analyzer.py` (un
+> « mini‑Volatility » qui reproduit les commandes `windows.*` sur ce format).
+
+Depuis le terminal du challenge (ou après avoir récupéré les fichiers du dépôt) :
+
+```bash
+# Syntaxe générale
+python3 tools/vol_analyzer.py -f challenge/memory.dmp <commande>
+
+# Commandes disponibles :
+#   windows.info      windows.pslist     windows.pstree    windows.netscan
+#   windows.malfind   windows.dlllist    windows.handles   windows.dumpfiles
+#   windows.strings   windows.registry
+```
+
+Outils complémentaires :
+- **`tools/extract_strings.py`** — extraction/décodage des chaînes du binaire extrait.
+- **Wireshark / `tshark`** — analyse du PCAP réseau (`network_capture.pcap`) pour l'étape bonus.
 
 ## Piste de résolution
 
-1. Listez les processus (`pslist` / `pstree`) et cherchez un nom ou une hiérarchie suspecte.
+Toutes les commandes ci-dessous se lancent via `python3 tools/vol_analyzer.py -f challenge/memory.dmp <commande>`.
+
+1. `windows.pslist` / `windows.pstree` — cherchez un nom ou une hiérarchie suspecte.
 2. Identifiez le processus suspect en regardant son PPID et sa session.
-3. Vérifiez les connexions réseau (`netscan`) associées à ce PID.
-4. Recherchez de l'injection mémoire (`malfind`).
-5. Extrayez et analysez les strings du binaire malveillant.
+3. `windows.netscan` — vérifiez les connexions réseau associées à ce PID.
+4. `windows.malfind` — recherchez de l'injection mémoire.
+5. `windows.strings --pid <PID>` (ou `tools/extract_strings.py`) — extrayez et analysez les chaînes du binaire malveillant.
 6. Récupérez le flag caché dans la configuration du malware.
 
 ## Format du flag
