@@ -10,12 +10,20 @@ RUN apt-get update && \
 
 RUN useradd -m -s /usr/sbin/nologin ctf
 
+# Secrets fournis au build (priorite sur setup/challenge.env). Vides par
+# defaut -> gen_secret.py utilise challenge.env ou des placeholders.
+ARG LICENSE=""
+ARG FLAG1=""
+ARG FLAG2=""
+ARG XOR_KEY=""
+
 WORKDIR /build
 COPY challenge/vault.c ./vault.c
-COPY setup/gen_secret.py ./gen_secret.py
+COPY setup/ ./setup/
 
 # Genere secret.h + flags, compile, installe dans /challenge.
-RUN python3 gen_secret.py && \
+RUN LICENSE="$LICENSE" FLAG1="$FLAG1" FLAG2="$FLAG2" XOR_KEY="$XOR_KEY" \
+        python3 setup/gen_secret.py && \
     gcc -fno-stack-protector -no-pie -fno-pie -O0 -w -o vault vault.c && \
     mkdir -p /challenge && \
     cp vault /challenge/vault && \
