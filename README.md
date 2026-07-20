@@ -55,12 +55,16 @@ http://<IP_TAILSCALE_VM>:8000
 
 ## Challenges disponibles
 
-| # | Nom | Catégorie | Statut |
-|---|-----|-----------|--------|
-| 1 | Phishing sur corp.local — analyse de logs post-incident | Blue Team | Intégré |
-| 2 | Mémoire et analyse de malware (Volatility) | Blue Team | Intégré |
-| 3 | LFI jusqu'au flag | Red Team | En cours |
-| 4 | Détection dans les logs (SIEM / ELK) | Blue Team | En cours |
+Numérotation par équipe (`N-Blue-Team-*` / `N-Red-Team-*`).
+
+| # | Dossier | Nom | Catégorie | Statut |
+|---|---------|-----|-----------|--------|
+| Blue 1 | `challenges/ctf-forensics-dfir-elk` ¹ | Phishing sur corp.local — analyse de logs (ELK) | Blue Team | Intégré |
+| Blue 2 | `challenges/2-Blue-Team-Memory-Forensics` | Mémoire et analyse de malware (Volatility) | Blue Team | Intégré |
+| Red 3 | `challenges/3-Red-Team-Binary-Vault` | VAULT-9 — reverse + exploitation binaire (ret2win) | Red Team | Développé, testé |
+| Red 1-2 | _à pousser_ | Exploitation machine Linux / Web (pivot & root) | Red Team | En cours |
+
+¹ à renommer `1-Blue-Team-Phishing-Corp-Local` sur la branche du challenge.
 
 ## Ajout d'un challenge sur le serveur
 
