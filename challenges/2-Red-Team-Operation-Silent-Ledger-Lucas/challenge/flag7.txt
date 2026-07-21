@@ -1,4 +1,0 @@
-flag: MERIDIAN{cap4bilit13s_ar3_p0w3r_5c2d71}
-
-You bypassed a permission check using a Linux capability instead of
-becoming root outright. See README_orchestrator.txt next to this file.
