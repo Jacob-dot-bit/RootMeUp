@@ -59,12 +59,12 @@ Numérotation par équipe (`N-Blue-Team-*` / `N-Red-Team-*`).
 
 | # | Dossier | Nom | Catégorie | Statut |
 |---|---------|-----|-----------|--------|
-| Blue 1 | `challenges/ctf-forensics-dfir-elk` ¹ | Phishing sur corp.local — analyse de logs (ELK) | Blue Team | Intégré |
+| Blue 1 | `challenges/1-Blue-Team-Phishing-ELK` | Phishing sur corp.local — analyse de logs (ELK) | Blue Team | Intégré |
 | Blue 2 | `challenges/2-Blue-Team-Memory-Forensics` | Mémoire et analyse de malware (Volatility) | Blue Team | Intégré |
-| Red 3 | `challenges/3-Red-Team-Binary-Vault` | VAULT-9 — reverse + exploitation binaire (ret2win) | Red Team | Développé, testé |
-| Red 1-2 | _à pousser_ | Exploitation machine Linux / Web (pivot & root) | Red Team | En cours |
-
-¹ à renommer `1-Blue-Team-Phishing-Corp-Local` sur la branche du challenge.
+| Red 1 | `challenges/1-Red-Team-Binary-Vault` | VAULT-9 — reverse + exploitation binaire (ret2win) | Red Team | Intégré |
+| Red 2 | `challenges/2-Red-Team-Operation-Silent-Ledger` | Opération Silent Ledger — machine Linux compromise (SSH → escalade → GPG) | Red Team | Intégré |
+| Blue 3-4 | _à venir_ | — | Blue Team | À faire |
+| Red 3-4 | _à venir_ | — | Red Team | À faire |
 
 ## Ajout d'un challenge sur le serveur
 
