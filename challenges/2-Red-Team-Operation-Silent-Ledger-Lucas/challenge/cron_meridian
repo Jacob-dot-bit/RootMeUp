@@ -1,5 +1,0 @@
-SHELL=/bin/bash
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-# Meridian nightly cleanup - runs every minute in this lab environment
-# (would be a nightly job in production) so the CTF instance stays snappy.
-* * * * * root /opt/scripts/cleanup.sh
