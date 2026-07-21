@@ -1,6 +1,0 @@
-svc_backup account - nightly backup rotation service.
-
-flag: MERIDIAN{h1st0ry_r3p3ats_1ts3lf_c48a02}
-
-Reminder to self: the group-writable cleanup.sh in /opt/scripts really
-should not be group-writable. Filing a ticket... eventually.
