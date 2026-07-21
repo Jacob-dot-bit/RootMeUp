@@ -3,7 +3,7 @@
 ## 1. Build & publication de l'image
 
 ```bash
-cd challenges/1-Red-Team-Operation-Silent-Ledger
+cd challenges/4-Red-Team-Operation-Silent-Ledger
 docker build -t registry.local/meridian-silent-ledger:latest .
 
 # si votre CTFd/plugin tire les images depuis un registre privé :

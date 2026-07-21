@@ -68,7 +68,7 @@ naturelle si le format de compétition l'exige.
 ## Fichiers du projet
 
 ```
-1-Red-Team-Operation-Silent-Ledger/
+4-Red-Team-Operation-Silent-Ledger/
 ├── Dockerfile                # build multi-stage (builder / secrets / final)
 ├── challenge/                    # tout ce qui est copié dans l'image
 │   ├── logviewer.c           # binaire SUID vulnérable (F5)
