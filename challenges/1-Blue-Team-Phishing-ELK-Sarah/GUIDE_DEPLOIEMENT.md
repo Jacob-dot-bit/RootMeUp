@@ -359,28 +359,6 @@ L'instance peut prendre 2-3 minutes à démarrer.
 > Accès : `http://100.X.X.X:<port_assigné>` (visible après démarrage)
 ```
 
-### 4.3 Créer les 10 flags dans CTFd
-
-Créer **10 challenges séparés** (ou 10 flags sur le même challenge selon ta config CTFd).
-Le plus propre est de faire **un challenge par flag** dans la même catégorie :
-
-| Challenge | Flag | Points |
-|-----------|------|--------|
-| FLAG 1 – IP du C2 | `FLAG{185.243.115.23}` | 50 |
-| FLAG 2 – Commande PowerShell encodée | `FLAG{SQBFAFgA...}` | 100 |
-| FLAG 3 – Script téléchargé | `FLAG{update.ps1}` | 100 |
-| FLAG 4 – SHA256 outil énumération | `FLAG{9f86d08...}` | 150 |
-| FLAG 5 – Technique MITRE dump LSASS | `FLAG{T1003.001}` | 150 |
-| FLAG 6 – Compte pivot vers APP-SRV01 | `FLAG{svc_backup}` | 150 |
-| FLAG 7 – Heure premier RDP APP-SRV01 | `FLAG{09:48:12}` | 200 |
-| FLAG 8 – Type auth Kerberos DC | `FLAG{Kerberos_TGS}` | 250 |
-| FLAG 9 – SID ajouté groupe privilégié | `FLAG{S-1-5-21-...}` | 300 |
-| FLAG 10 – Compte persistant + SPN | `FLAG{svc_update$}` | 400 |
-
-> Pour FLAG 4 : les joueurs voient `SharpHound.exe` dans les logs
-> et doivent **chercher eux-mêmes le SHA256 sur VirusTotal / GitHub**.
-> Le hash n'apparaît **pas** dans les logs du challenge.
-
 ---
 
 ## PARTIE 5 — Isolation des instances par équipe
