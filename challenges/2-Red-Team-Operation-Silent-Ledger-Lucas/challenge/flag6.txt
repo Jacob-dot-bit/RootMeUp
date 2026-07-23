@@ -1,7 +1,0 @@
-Nice work pivoting to app_agent.
-
-flag: MERIDIAN{sud0_m1sc0nf1g_str1k3s_ag41n_e0a934}
-
-Hint: check your effective capabilities before you go looking for
-another sudo rule -- not everything needs root.
-  getcap -r / 2>/dev/null
