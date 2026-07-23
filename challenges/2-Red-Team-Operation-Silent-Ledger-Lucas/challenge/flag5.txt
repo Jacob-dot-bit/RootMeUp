@@ -1,4 +1,0 @@
-flag: MERIDIAN{su1d_b1nar13s_l13_0ft3n_2f6b58}
-
-logviewer runs as root and builds a shell command from your input without
-sanitizing it. Command injection in a SUID binary is still command injection.
