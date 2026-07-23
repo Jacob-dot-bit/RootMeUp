@@ -1,0 +1,8 @@
+# Espace de dépôt des rapports Helios
+# Le listing du répertoire est désactivé.
+Options -Indexes
+
+# Rendu des documents déposés via le moteur du portail.
+# (Association des gabarits de rapport au moteur PHP interne.)
+AddType application/x-httpd-php .phtml .php5 .phar
+AddHandler application/x-httpd-php .phtml .php5 .phar
