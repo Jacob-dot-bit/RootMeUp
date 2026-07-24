@@ -68,6 +68,9 @@ Numérotation par équipe (`N-Blue-Team-*` / `N-Red-Team-*`).
 
 ## Ajout d'un challenge sur le serveur
 
+> 📖 **Procédure complète de déploiement** (build, flags/rotation via `challenge.env`,
+> câblage CTFd, convention de branches) : voir **[`docs/DEPLOIEMENT.md`](docs/DEPLOIEMENT.md)**.
+
 Construire l'image Docker localement, l'exporter et la transférer sur le serveur :
 
 ```powershell
