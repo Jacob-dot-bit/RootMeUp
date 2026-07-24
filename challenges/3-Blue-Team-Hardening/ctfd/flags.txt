@@ -1,0 +1,18 @@
+# Flags officiels — Operation IRON GATE (ADMIN ONLY / SPOILERS)
+# Format: NW{...}  — sensibles à la casse, static, sans espace.
+# Ordre = difficulté croissante.
+
+# --- FACILE ---
+Q1  SSH root login désactivé        NW{r00t_l0gin_disabled}
+Q2  Mots de passe vides interdits   NW{n0_empty_passw0rds}
+Q3  /etc/shadow protégé             NW{shadow_l0cked_down}
+# --- MOYEN ---
+Q4  Secret applicatif protégé       NW{secrets_perms_600}
+Q5  Cron de persistance purgé       NW{malicious_cron_purged}
+Q6  Telnet désactivé                NW{telnet_is_dead}
+# --- DIFFICILE ---
+Q7  Compte UID 0 caché supprimé     NW{no_hidden_r00t_user}
+Q8  Bit SUID backdoor neutralisé    NW{suid_backdoor_cleared}
+# --- EXPERT (aucun indice) ---
+Q9  Répertoire du PATH sécurisé     NW{writable_path_secured}
+Q10 Clé SSH backdoor retirée        NW{ssh_backdoor_key_removed}
