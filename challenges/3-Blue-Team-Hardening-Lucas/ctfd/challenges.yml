@@ -1,0 +1,112 @@
+# =============================================================================
+#  Définition des challenges CTFd — Operation IRON GATE (Hardening)
+#  Q1 = challenge CONTENEUR (bouton Start Instance -> terminal web).
+#  Q2..Q10 = challenges STANDARD, débloqués progressivement (prerequisites).
+#  DIFFICULTÉ CROISSANTE : de moins en moins d'indices ; Q9/Q10 sans indice.
+# =============================================================================
+category: "Blue Team - Hardening"
+flag_format: "NW{...}"
+# NB : les flags sont validés/attribués CÔTÉ SERVEUR (grader/grade.py). La
+# commande `audit` dans le conteneur n'affiche que la progression (aucun flag
+# n'est stocké dans l'instance). Voir docs/ADMIN_DEPLOYMENT.md section 6.
+
+challenges:
+  # ---------------- FACILE ----------------
+  - id: q1
+    name: "IRON GATE #1 — Verrouiller SSH (root)"
+    type: container            # CTFdDockerContainersPlugin
+    image: "nw-hardening:latest"
+    port: 8000
+    value: 50
+    difficulty: facile
+    description: >
+      Lancez l'instance : un terminal web s'ouvre sur srv-legacy01 (session
+      'analyst', sudo dispo). Tapez `audit` pour voir votre progression.
+      Interdisez la connexion root en SSH ; une fois le contrôle en [OK], le
+      flag est validé côté serveur.
+    flags: ["NW{r00t_l0gin_disabled}"]
+    prerequisites: []
+
+  - id: q2
+    name: "IRON GATE #2 — Mots de passe vides"
+    type: standard
+    value: 50
+    difficulty: facile
+    description: "Interdisez les mots de passe vides côté SSH."
+    flags: ["NW{n0_empty_passw0rds}"]
+    prerequisites: [q1]
+
+  - id: q3
+    name: "IRON GATE #3 — Protéger /etc/shadow"
+    type: standard
+    value: 75
+    difficulty: facile
+    description: "/etc/shadow est lisible par tout le monde. Corrigez ses permissions."
+    flags: ["NW{shadow_l0cked_down}"]
+    prerequisites: [q2]
+
+  # ---------------- MOYEN ----------------
+  - id: q4
+    name: "IRON GATE #4 — Secret en clair"
+    type: standard
+    value: 100
+    difficulty: moyen
+    description: "Un secret applicatif est lisible par tous. Restreignez ses permissions."
+    flags: ["NW{secrets_perms_600}"]
+    prerequisites: [q3]
+
+  - id: q5
+    name: "IRON GATE #5 — Persistance planifiée"
+    type: standard
+    value: 100
+    difficulty: moyen
+    description: "Une tâche planifiée effectue un rappel réseau suspect. Supprimez cette persistance."
+    flags: ["NW{malicious_cron_purged}"]
+    prerequisites: [q4]
+
+  - id: q6
+    name: "IRON GATE #6 — Service en clair"
+    type: standard
+    value: 125
+    difficulty: moyen
+    description: "Un service réseau en clair écoute encore. Désactivez-le."
+    flags: ["NW{telnet_is_dead}"]
+    prerequisites: [q5]
+
+  # ---------------- DIFFICILE ----------------
+  - id: q7
+    name: "IRON GATE #7 — Accès admin illégitime"
+    type: standard
+    value: 150
+    difficulty: difficile
+    description: "Un accès administrateur illégitime subsiste sur le système. Trouvez-le et supprimez-le."
+    flags: ["NW{no_hidden_r00t_user}"]
+    prerequisites: [q6]
+
+  - id: q8
+    name: "IRON GATE #8 — Élévation de privilèges"
+    type: standard
+    value: 175
+    difficulty: difficile
+    description: "Un binaire permet une élévation de privilèges. Neutralisez-le."
+    flags: ["NW{suid_backdoor_cleared}"]
+    prerequisites: [q7]
+
+  # ---------------- EXPERT (aucun indice) ----------------
+  - id: q9
+    name: "IRON GATE #9 — Intégrité du PATH"
+    type: standard
+    value: 225
+    difficulty: expert
+    description: "Aucun indice. La commande `audit` signale un problème d'intégrité du PATH : à vous de le trouver."
+    flags: ["NW{writable_path_secured}"]
+    prerequisites: [q8]
+
+  - id: q10
+    name: "IRON GATE #10 — Accès distant résiduel"
+    type: standard
+    value: 250
+    difficulty: expert
+    description: "Aucun indice. Un accès distant résiduel persiste sur le compte root. Éliminez-le."
+    flags: ["NW{ssh_backdoor_key_removed}"]
+    prerequisites: [q9]
