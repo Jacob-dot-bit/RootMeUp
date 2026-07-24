@@ -1,5 +1,0 @@
-- Docker (construction et stockage des images de challenges).
-- containerd (runtime, exécution des instances de challenges et lien avec CTFd).
-- CTFd (interface web, scores, flags) — géré comme service systemd.
-- CTFdDockerContainersPlugin (instanciation automatique d'un conteneur par équipe depuis CTFd).
-- Tailscale (accès sécurisé à la plateforme via réseau privé virtuel).
