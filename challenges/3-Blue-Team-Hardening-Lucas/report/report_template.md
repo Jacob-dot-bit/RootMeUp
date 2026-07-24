@@ -10,7 +10,7 @@ _(État initial du serveur, niveau de risque, temps de remédiation)_
 ## 2. Vulnérabilités corrigées (difficulté croissante)
 | # | Palier | Faille | Correctif appliqué | Flag | Réf. CIS / MITRE |
 |---|--------|--------|--------------------|------|------------------|
-| 1 | facile | SSH root login autorisé | | NW{...} | CIS 5.2.x |
+| 1 | facile | SSH root login autorisé | | RootMeUp{...} | CIS 5.2.x |
 | 2 | facile | Mots de passe SSH vides | | | CIS 5.2.x |
 | 3 | facile | /etc/shadow world-readable | | | CIS 6.1.x |
 | 4 | moyen | Secret applicatif en clair | | | T1552.001 |

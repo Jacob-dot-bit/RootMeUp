@@ -3,17 +3,14 @@
 > ⚠️ Contient les flags et la logique interne. Ne pas distribuer aux joueurs.
 
 ## 1. Architecture
-Deux composants **séparés** :
+**Un seul conteneur, autonome** (build multi-stage). **Rien à faire tourner côté serveur.**
+- **Stage builder** : compile `audit/checker.c` et `audit/getflag.c` en binaires (`gcc -O2 -s`, symboles supprimés).
+- `setup/harden_setup.sh` déploie l'**état vulnérable** au *build* (10 mauvaises configs, difficulté croissante).
+- **ttyd** sert un **terminal web** sur le **port 8000**, session `analyst` (sudo).
+- Commande **`audit`** (`/opt/audit/checker`) : affiche la **progression** (fait / à corriger), **jamais de flag**.
+- Commande **`getflag N`** (`/opt/audit/getflag`) : re-vérifie que la faille N est réellement corrigée, et **seulement dans ce cas** décode et affiche le flag N. Les flags sont **XOR-obfusqués** dans le binaire compilé (aucun flag en clair).
 
-**A. Le conteneur du joueur** (image Docker, build multi-stage) — ne contient **AUCUN flag** :
-- **Stage builder** : compile `audit/checker.c` en binaire (`gcc -O2 -s`) ;
-- `setup/harden_setup.sh` déploie l'**état vulnérable** au *build* (10 mauvaises configs, difficulté croissante) ;
-- **ttyd** sert un **terminal web** sur le **port 8000**, session `analyst` (sudo) ;
-- `/opt/audit/checker` (commande `audit`) affiche **uniquement la progression** (fait / à corriger), **jamais de flag**.
-
-**B. Le valideur côté serveur** `grader/grade.py` — tourne sur l'**hôte CTFd / poste admin**, **hors** du conteneur. C'est **lui seul** qui détient les flags. Il inspecte l'état d'une instance (en local pour les tests, ou à distance via SSH) et ne délivre un flag qu'une fois le correctif réellement appliqué.
-
-Conséquence : le joueur, même root sur son instance, n'a aucun flag à voler ni à reverse-engineerer — **ils ne sont pas dans la machine**. Démarrage en quelques secondes.
+Démarrage en quelques secondes. Le joueur soumet ensuite le flag dans CTFd (flux jeopardy classique).
 
 ## 2. Build & test local
 ```bash
@@ -70,70 +67,37 @@ questions (le joueur durcit le serveur et récupère les flags au fur et à mesu
 
 Les énoncés Q9/Q10 ne donnent **aucun indice** (comme la commande `audit`).
 
-## 5. Anti-triche — modèle retenu
-Question : **peut-on obtenir un flag sans durcir la machine, même en reversant ?**
-Réponse avec ce modèle : **non**, parce que les flags **ne sont pas dans le
-conteneur du joueur**.
+## 5. Anti-triche — honnêteté sur les limites
+Question : **peut-on obtenir un flag sans durcir, même en reversant ?**
 
-- Le binaire `checker` embarqué ne contient **aucun flag** (vérifié : `strings`
-  ne renvoie rien). Le reverser ne donne donc rien à extraire.
-- Les flags vivent **uniquement** dans `grader/grade.py`, exécuté côté serveur,
-  là où le joueur n'a **aucun** accès (il n'est pas root sur l'hôte CTFd).
-- Le grader ne délivre un flag que si l'état de l'instance est **réellement
-  conforme** (permissions/config/absence de fichier). « Valider » = appliquer le
-  vrai correctif.
+Ce qui est bloqué :
+- **Aucun flag en clair** dans l'image : ils sont XOR-obfusqués dans le binaire
+  `getflag` compilé et strippé. `cat` / `strings` ne renvoient **rien** (vérifié).
+- `getflag N` ne décode le flag que si la faille N est **réellement corrigée**.
+  « Obtenir » un flag = appliquer le vrai correctif.
 
-C'est le principe des CTF défensifs : **on ne cache pas un secret à quelqu'un qui
-contrôle la machine — on met le secret ailleurs.** La validation étant hors du
-périmètre du joueur, ni `cat`, ni `strings`, ni gdb/objdump ne permettent de
-récupérer un flag.
+La limite honnête à assumer devant le jury : le joueur est **root sur son
+instance**, ce qui est **indispensable pour durcir un système**. Faire tourner
+un valideur **hors** de sa portée demanderait un composant serveur (accès à la
+socket Docker de l'hôte CTFd), ce qui n'est pas possible dans cet environnement.
+Sans ce composant, un joueur **expert** pourrait désosser le binaire (gdb /
+objdump) pour extraire les flags. C'est une **propriété fondamentale** : on ne
+peut pas cacher un secret à quelqu'un qui contrôle la machine.
 
-## 6. Récupération des flags par le joueur (service `getflag`)
-Modèle principal : **le joueur tape `getflag <N>` dans le terminal**, ce qui
-interroge le **service de validation** hébergé côté serveur ; le service
-inspecte lui-même l'instance et renvoie le flag si la faille est corrigée. Le
-joueur le **saisit ensuite dans CTFd** (flux jeopardy classique). Aucun flag
-n'existe dans le conteneur.
+En pratique c'est un **très bon niveau pour un CTF** — supérieur à la norme, où
+les flags sont souvent en clair dans le conteneur / les logs / les artefacts
+(comme dans la plupart des autres challenges). La triche « facile » (cat/strings)
+est bloquée, et récupérer un flag exige soit de **durcir réellement**, soit de
+faire du **reverse engineering** (une compétence en soi). Pour la notation, le
+**rapport** (`report/`) et la **démo en soutenance** restent la preuve du travail.
 
-### 6.1 Lancer le service de validation (sur l'hôte Docker)
+## 6. Vérification admin (optionnelle, hors conteneur)
+Pour contrôler l'état d'une instance sans passer par `getflag`, un outil CLI est
+fourni (il n'est **pas** embarqué dans l'image) :
 ```bash
-pip install flask
-python3 grader/grade_server.py --port 9000       # prod : inspection via `docker exec`
-```
-Le service (`grade_server.py`) :
-- identifie le conteneur appelant par son **IP source** (`docker inspect`) → un
-  joueur ne peut réclamer que les flags de **sa propre** instance ;
-- inspecte l'état **lui-même** via `docker exec` (il ne fait jamais confiance au
-  client) ;
-- détient les flags (via `grader/checks.py`) — ils ne sont **jamais** dans l'image.
-
-Prérequis : l'hôte exécutant le service a accès à la socket Docker, et les
-instances peuvent le joindre à l'URL `GRADER_URL` (par défaut
-`http://host.docker.internal:9000`). Adaptez-la au lancement du conteneur :
-```bash
-docker run -e GRADER_URL="http://<ip_hote>:9000" -p 8000:8000 nw-hardening:latest
-```
-
-### 6.2 Côté joueur
-```bash
-audit             # progression (fait / à corriger)
-sudo ...          # je corrige une faille
-getflag 3         # -> le serveur valide et me renvoie le flag de la tâche 3
-```
-
-### 6.3 Alternatives (sans le service getflag)
-- **Correction manuelle / soutenance** : l'admin lit les flags gagnés d'une équipe
-  ```bash
-  python3 grader/grade.py --ssh root@<ip_instance> -p <port>
-  python3 grader/grade.py --ssh ... --task 3      # un seul flag
-  ```
-- **Award auto** : un cron appelle `grade.py --score-only` par instance et marque
-  les challenges résolus via l'API CTFd.
-
-### 6.4 Test en local sans Docker (mode dev)
-```bash
-python3 grader/grade_server.py --port 9000 --dev-target /chemin/rootfs &
-GRADER_URL=http://127.0.0.1:9000 bash setup/getflag 1
+python3 grader/grade.py --ssh root@<ip_instance> -p <port>   # les 10 tâches
+python3 grader/grade.py --ssh ... --task 3                   # une seule
+python3 grader/grade.py --target /chemin/rootfs              # sur un FS local
 ```
 
 ## 7. Dépannage
@@ -141,16 +105,20 @@ GRADER_URL=http://127.0.0.1:9000 bash setup/getflag 1
 |----------|-------|----------|
 | Terminal web ne charge pas | ttyd non démarré | `docker logs`, vérifier le port 8000 |
 | `audit` demande un mot de passe | sudoers analyst absent | vérifier `/etc/sudoers.d/00-analyst` (NOPASSWD) |
-| Un contrôle ne passe pas en [OK] | correctif incomplet | relire l'indice `[À CORRIGER]`, vérifier avec `stat`/`grep` |
-| Grader renvoie 0/10 en SSH | accès/chemins | tester `--target` en local, vérifier les droits SSH |
+| `getflag N` dit « pas encore corrigée » | correctif incomplet | relire `audit`, vérifier avec `stat`/`grep` |
+| `getflag` / `audit` demande un mot de passe | sudoers analyst absent | vérifier `/etc/sudoers.d/00-analyst` (NOPASSWD) |
 | Build échoue au download ttyd | pas de réseau au build | pré-télécharger `ttyd.x86_64` et `COPY` le binaire |
-| Flags refusés dans CTFd | casse/espaces | flags exacts, format `NW{...}` |
+| Flags refusés dans CTFd | casse/espaces | flags exacts, format `RootMeUp{...}` |
 
 ## 8. Personnaliser
 Modifiez les valeurs dans `setup/harden_setup.sh` (secrets, comptes, services),
-les contrôles dans `audit/checker.c` (auto-évaluation joueur) **et** les flags +
-contrôles dans `grader/grade.py` (validation serveur, source de vérité des
-flags). Reconstruisez l'image et re-testez avec `solution/verify_hardening.sh`.
-⚠️ Gardez `checker.c` et `grade.py` cohérents (mêmes 10 contrôles).
+puis les contrôles dans `audit/checker.c` (progression) **et** `audit/getflag.c`
+(délivrance des flags — c'est là que sont les flags obfusqués), en les gardant
+**cohérents** (mêmes 10 contrôles). Le module `grader/checks.py` doit suivre si
+vous utilisez l'outil de vérification admin. Reconstruisez l'image et re-testez
+avec `solution/verify_hardening.sh`.
+
+> Pour régénérer les tableaux XOR de `getflag.c` après changement des flags :
+> `python3` → `[ord(c)^0x5A for c in "RootMeUp{...}"]` (voir en-tête du fichier).
 
 *Blue Team CTF – Lucas – ESGI Projet Annuel 2026*

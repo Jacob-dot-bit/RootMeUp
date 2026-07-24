@@ -14,16 +14,16 @@ import subprocess
 
 # --- FLAGS : présents UNIQUEMENT côté serveur, jamais dans le conteneur ------
 FLAGS = {
-    1:  "NW{r00t_l0gin_disabled}",
-    2:  "NW{n0_empty_passw0rds}",
-    3:  "NW{shadow_l0cked_down}",
-    4:  "NW{secrets_perms_600}",
-    5:  "NW{malicious_cron_purged}",
-    6:  "NW{telnet_is_dead}",
-    7:  "NW{no_hidden_r00t_user}",
-    8:  "NW{suid_backdoor_cleared}",
-    9:  "NW{writable_path_secured}",
-    10: "NW{ssh_backdoor_key_removed}",
+    1:  "RootMeUp{r00t_l0gin_disabled}",
+    2:  "RootMeUp{n0_empty_passw0rds}",
+    3:  "RootMeUp{shadow_l0cked_down}",
+    4:  "RootMeUp{secrets_perms_600}",
+    5:  "RootMeUp{malicious_cron_purged}",
+    6:  "RootMeUp{telnet_is_dead}",
+    7:  "RootMeUp{no_hidden_r00t_user}",
+    8:  "RootMeUp{suid_backdoor_cleared}",
+    9:  "RootMeUp{writable_path_secured}",
+    10: "RootMeUp{ssh_backdoor_key_removed}",
 }
 
 LABELS = {
