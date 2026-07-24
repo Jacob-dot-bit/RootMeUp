@@ -1,5 +1,0 @@
-MERIDIAN{0p3ration_s1l3nt_l3dg3r_c0mpl3t3_f4a217}
-
-Congratulations - you have completed Operation SILENT LEDGER end to end,
-from an intern's phished credentials to full compromise of Meridian
-Capital's crown-jewel data. Write it up.
