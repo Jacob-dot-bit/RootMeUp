@@ -1,7 +1,12 @@
+# Secret réel du challenge — ne JAMAIS committer (voir challenge.env.example)
+challenge.env
+
 # Fichiers générés au build Docker (recréés automatiquement)
 challenge/memory.dmp
 challenge/network_capture.pcap
 challenge/hints.txt
+valout/
+solution/flag.sha256
 
 # Export Docker (trop lourd pour git)
 *.tar

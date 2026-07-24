@@ -45,6 +45,9 @@ COPY report/ ./report/
 # Copier le script de validation (le joueur peut valider ses réponses)
 COPY solution/validate_flag.py ./solution/validate_flag.py
 
+# Hash SHA256 du flag (généré au build depuis challenge.env) — jamais le flag en clair
+COPY --from=builder /build/valout/flag.sha256 ./solution/flag.sha256
+
 # Copier le README
 COPY README.md ./README.md
 

@@ -50,7 +50,7 @@ Challenge type: `container`
 ## 6) Creation du flag (obligatoire)
 Dans l'onglet `Flags`:
 - **Type**: `Static`
-- **Valeur**: `blue{m3m_f0r3ns1cs_v0l4t1l1ty_m4st3r}`
+- **Valeur**: la valeur définie dans `setup/challenge.env` (`FLAG=...`) — **pas** de flag en clair dans le dépôt. Voir « Fournir le flag » ci-dessous.
 - **Case Sensitive**: activé
 
 ## 7) Sequence de validation
@@ -58,8 +58,25 @@ Dans l'onglet `Flags`:
 2. Tester `Start Instance` avec un compte joueur.
 3. Vérifier l'accès HTTP aux fichiers : `http://<instance>:8000/memory.dmp`
 4. Vérifier que `hints.txt` et `network_capture.pcap` sont bien accessibles.
-5. Soumettre le flag `blue{m3m_f0r3ns1cs_v0l4t1l1ty_m4st3r}` pour valider.
+5. Soumettre le flag (celui de `challenge.env`) pour valider.
 6. Passer en `Visible`.
+
+## Fournir le flag (ne PAS le committer)
+
+Le flag n'est plus codé en dur : il est fourni au build via un fichier gitignoré,
+puis cuit dans le dump + le PCAP, et son hash SHA256 est généré pour le validateur.
+
+```bash
+cd setup
+cp challenge.env.example challenge.env
+$EDITOR challenge.env            # FLAG=blue{...}  (choisir une valeur rotée)
+```
+Puis (re)builder l'image ; `gen`/`generate_challenge.py` lit `challenge.env` automatiquement.
+Si aucun `challenge.env` n'est fourni, le build réussit mais avec un flag **placeholder**
+(`blue{PLACEHOLDER_...}`). Le même flag doit être saisi côté CTFd (étape 6).
+
+> ⚠️ Rotation : l'ancien flag `blue{m3m_f0r3ns1cs_v0l4t1l1ty_m4st3r}` est resté public
+> dans l'historique git — choisir une **nouvelle** valeur dans `challenge.env`.
 
 ## 8) Troubleshooting
 Si l'instance ne démarre pas :

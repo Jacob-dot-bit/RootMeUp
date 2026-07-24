@@ -26,10 +26,12 @@ import base64
 import time
 from datetime import datetime, timedelta
 
+from flag_config import resolve_flag
+
 # ─── Configuration du challenge ───────────────────────────────────────────────
 
 CHALLENGE_CONFIG = {
-    "flag": "blue{m3m_f0r3ns1cs_v0l4t1l1ty_m4st3r}",
+    "flag": resolve_flag(),
     "c2_domain": "c2.darkops-syndicate.net",
     "c2_ip": "185.141.27.83",
     "c2_port": 4444,
@@ -407,6 +409,13 @@ def main():
 
     dump_path = generate_memory_dump(challenge_dir)
     generate_hints(challenge_dir)
+
+    # Hash SHA256 du flag pour le validateur (jamais le flag en clair).
+    valout_dir = os.path.join(project_dir, "valout")
+    os.makedirs(valout_dir, exist_ok=True)
+    flag_hash = hashlib.sha256(CHALLENGE_CONFIG["flag"].encode()).hexdigest()
+    with open(os.path.join(valout_dir, "flag.sha256"), "w") as f:
+        f.write(flag_hash + "\n")
 
     print()
     print("[✓] Challenge prêt ! Fichiers dans :", challenge_dir)

@@ -7,11 +7,21 @@ Valide les réponses du joueur et calcule un score.
 """
 
 import hashlib
+import os
 import sys
 
 # ─── Hashes SHA256 des réponses attendues ─────────────────────────────────────
 # Les réponses en clair ne sont PAS stockées ici pour éviter le spoil.
-# Ces hashes ont été générés lors de la création du challenge.
+# Le hash du FLAG est généré au build (rotation via challenge.env) et lu
+# depuis flag.sha256 ; les autres réponses sont des faits fixes du challenge.
+
+def _load_flag_hash():
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "flag.sha256")
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except OSError:
+        return None
 
 EXPECTED_HASHES = {
     "pid":          "890ebdf964b651bc670b2001f32aad8eb1c0e9704f7857b4961fd0a602eed83b",
@@ -19,7 +29,7 @@ EXPECTED_HASHES = {
     "c2_ip":        "4e0a24277c461cb7a6b904173aabf898ba90cf9f5832a1a54c5258a6ea26c08b",
     "c2_domain":    "b6bd3f76cc36838799e6969e675143ffa8a738743b613a8e67400cf255d11163",
     "c2_port":      "79f06f8fde333461739f220090a23cb2a79f6d714bee100d0e4b4af249294619",
-    "flag":         "adbace5b3008f4f51eb858fa0ff6ac58923b88da172a4f86902079bb9469abef",
+    "flag":         _load_flag_hash(),
 }
 
 SCORING = {
