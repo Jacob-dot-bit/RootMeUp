@@ -1,9 +1,12 @@
-# Solution — VAULT-9 (Red Team 3) ⚠️ SPOILERS
+# Solution — VAULT-9 (Red Team 1) ⚠️ SPOILERS
 
 Challenge intermédiaire en deux étapes : **reverse** puis **exploitation binaire (ret2win)**.
 
-- **Flag 1** : `RM{r3v3rs3_l3_x0r_c0mm3_un_pr0}`
-- **Flag 2** : `RM{r3t2w1n_l4_v4ult_3st_0uv3rt3}`
+> Les flags et la licence sont **rotés par déploiement** (définis dans `setup/challenge.env`,
+> jamais committés) : les valeurs réelles dépendent de l'instance déployée.
+
+- **Flag 1** (reverse) : `RM{…défini dans setup/challenge.env…}`
+- **Flag 2** (pwn) : `RM{…défini dans setup/challenge.env…}`
 
 Le binaire est compilé **sans canari de pile et sans PIE** (`-fno-stack-protector -no-pie`), ce qui rend le ret2win réalisable au niveau intermédiaire.
 
@@ -64,8 +67,8 @@ Sortie attendue :
 
 ```
 [+] vault() @ 0x401334
-[+] Flag 1 : RM{r3v3rs3_l3_x0r_c0mm3_un_pr0}
-[+] Flag 2 : RM{r3t2w1n_l4_v4ult_3st_0uv3rt3}
+[+] Flag 1 : RM{…flag roté…}
+[+] Flag 2 : RM{…flag roté…}
 ```
 
 > Testé et validé le 20/07/2026, **en conteneur Docker** : build OK, chaîne complète fonctionnelle (offset 72, gadget `ret` pour l'alignement, ret2win vers `vault` @ `0x401334`). Les 2 flags sont récupérés par `exploit.py`.

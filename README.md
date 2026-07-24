@@ -63,8 +63,9 @@ Numérotation par équipe (`N-Blue-Team-*` / `N-Red-Team-*`).
 | Blue 2 | `challenges/2-Blue-Team-Memory-Forensics-Jakub` | Mémoire et analyse de malware (Volatility) | Blue Team | Intégré |
 | Red 1 | `challenges/1-Red-Team-Binary-Vault-Jakub` | VAULT-9 — reverse + exploitation binaire (ret2win) | Red Team | Intégré |
 | Red 2 | `challenges/2-Red-Team-Operation-Silent-Ledger-Lucas` | Opération Silent Ledger — machine Linux compromise (SSH → escalade → GPG) | Red Team | Intégré |
-| Blue 3-4 | _à venir_ | — | Blue Team | À faire |
-| Red 3-4 | _à venir_ | — | Red Team | À faire |
+| Blue 3 | `challenges/3-Blue-Team-Hardening-Lucas` | Hardening / durcissement système | Blue Team | Intégré |
+| Red 3 | `challenges/3-Red-Team-Nexus-Cipher-Sarah` | Cipher — pentest du portail API Nexus (crypto/web, 10 flags) | Red Team | Intégré |
+| Blue 4 / Red 4 | _à venir_ | — | — | À faire |
 
 ## Ajout d'un challenge sur le serveur
 
