@@ -149,7 +149,7 @@ int main(void) {
     printf("  ================================================================\n");
     printf("   Pour chaque contrôle en [OK], récupère ton flag avec :\n");
     printf("       " G "getflag <numéro>" Z "   (ex: getflag 1)\n");
-    printf("   Le flag est validé côté serveur puis à saisir dans CTFd.\n");
-    printf("   (Aucun flag n'est stocké sur cette machine.)\n\n");
+    printf("   getflag vérifie la correction et te donne le flag à saisir\n");
+    printf("   dans CTFd. (Aucun flag n'est lisible en clair sur la machine.)\n\n");
     return 0;
 }

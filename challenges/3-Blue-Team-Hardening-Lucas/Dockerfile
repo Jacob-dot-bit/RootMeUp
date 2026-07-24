@@ -15,8 +15,10 @@ FROM debian:12-slim AS builder
 RUN apt-get update && apt-get install -y --no-install-recommends gcc libc6-dev \
     && rm -rf /var/lib/apt/lists/*
 COPY audit/checker.c /build/checker.c
+COPY audit/getflag.c /build/getflag.c
 # -s : strip des symboles ; -O2 : optimisation (rend le reverse plus penible)
-RUN gcc -O2 -s -o /build/checker /build/checker.c
+RUN gcc -O2 -s -o /build/checker /build/checker.c \
+    && gcc -O2 -s -o /build/getflag /build/getflag.c
 
 # ----------------------------- STAGE 2 : final -------------------------------
 FROM debian:12-slim
@@ -39,20 +41,19 @@ RUN curl -fsSL -o /usr/local/bin/ttyd \
         https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.x86_64 \
     && chmod +x /usr/local/bin/ttyd
 
-# --- Verificateur compile (root only, aucun flag en clair) -------------------
+# --- Binaires compiles (root only, flags XOR-obfusques, aucun flag en clair) --
 RUN mkdir -p /opt/audit
 COPY --from=builder /build/checker /opt/audit/checker
-RUN chmod 700 /opt/audit/checker && chown root:root /opt/audit/checker
+COPY --from=builder /build/getflag /opt/audit/getflag
+RUN chmod 700 /opt/audit/checker /opt/audit/getflag \
+    && chown root:root /opt/audit/checker /opt/audit/getflag
 
-# Commande `audit` accessible au joueur (execute le checker en root via sudo)
+# `audit`  : affiche la progression (aucun flag). `getflag N` : delivre le flag
+# de la tache N uniquement si elle est reellement durcie. Les deux tournent en
+# root via sudo (necessaire pour lire /root, /etc/shadow, etc.).
 RUN printf '#!/bin/bash\nexec sudo /opt/audit/checker "$@"\n' > /usr/local/bin/audit \
-    && chmod 755 /usr/local/bin/audit
-
-# Commande `getflag` : client qui reclame un flag au serveur de validation.
-# NE CONTIENT AUCUN FLAG. URL du grader configurable via -e GRADER_URL=...
-ENV GRADER_URL="http://host.docker.internal:9000"
-COPY setup/getflag /usr/local/bin/getflag
-RUN dos2unix /usr/local/bin/getflag && chmod 755 /usr/local/bin/getflag
+    && printf '#!/bin/bash\nexec sudo /opt/audit/getflag "$@"\n' > /usr/local/bin/getflag \
+    && chmod 755 /usr/local/bin/audit /usr/local/bin/getflag
 
 # --- Mise en place de l'environnement vulnerable au BUILD --------------------
 COPY setup/harden_setup.sh /opt/setup/harden_setup.sh

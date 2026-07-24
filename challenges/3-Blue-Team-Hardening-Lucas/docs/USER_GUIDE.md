@@ -17,17 +17,17 @@ Elle affiche votre **progression** sur les **10 contrôles de durcissement** :
 - `[À CORRIGER]` → la faille est présente (avec un indice pour les niveaux faciles) ;
 - `[OK]` → c'est corrigé.
 
-> ℹ️ `audit` ne montre **pas** les flags : ils n'existent pas sur la machine
-> (impossible à voler/reverser). Pour obtenir un flag, utilise `getflag`.
+> ℹ️ `audit` ne montre **pas** les flags. Pour obtenir un flag, corrige la
+> faille puis utilise `getflag`.
 
 ## 3. Récupérer un flag : `getflag <N>`
 Une fois une faille corrigée (contrôle en `[OK]` dans `audit`), demande son flag :
 ```bash
 getflag 1        # récupère le flag de la tâche 1
 ```
-Le **serveur** re-vérifie lui-même que la faille est corrigée, puis te renvoie le
-flag. Tu n'as plus qu'à le **coller dans CTFd**. Si la faille n'est pas encore
-corrigée, `getflag` refuse (pas de triche possible).
+`getflag` **re-vérifie que la faille est réellement corrigée**, puis te donne le
+flag à **coller dans CTFd**. Si ce n'est pas corrigé, il refuse — aucun flag n'est
+lisible en clair sur la machine, il n'apparaît qu'une fois le durcissement fait.
 
 ## 4. Boucle de jeu
 ```
@@ -73,7 +73,7 @@ stat -c '%a %n' <fichier>            # voir les permissions en octal
 
 ## 7. Astuces
 - Lisez bien l'**indice** de chaque ligne `[A CORRIGER]`.
-- Les flags sont au format `NW{...}`, **sensibles à la casse**.
+- Les flags sont au format `RootMeUp{...}`, **sensibles à la casse**.
 - Vous ne pouvez rien casser d'irréversible : l'instance est jetable, relancez-la si besoin.
 - Ne supprimez pas le `sudo` de l'utilisateur **`analyst`** (c'est votre accès admin).
 

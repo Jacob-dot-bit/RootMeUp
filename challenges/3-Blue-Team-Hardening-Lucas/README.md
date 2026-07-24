@@ -22,12 +22,12 @@ Chaque faille corrigée révèle un **flag** à soumettre dans CTFd.
 - Cliquez sur **Start Instance** dans CTFd → un **terminal web** s'ouvre (le serveur srv-legacy01).
 - Vous êtes connecté en tant qu'utilisateur **`analyst`** (avec `sudo`).
 - Tapez la commande **`audit`** : elle affiche votre **progression** (ce qui reste à corriger), niveau par niveau.
-- Corrigez les failles. La **validation et l'attribution des flags se font côté serveur** (le joueur, même root sur son instance, n'a aucun flag stocké localement à voler ou à reverser).
+- Corrigez une faille, puis tapez **`getflag <N>`** : la commande re-vérifie que le correctif est réellement appliqué et vous donne le flag à saisir dans CTFd.
 
-> 🔒 **Anti-triche par conception** : aucun flag n'existe dans le conteneur. Un
-> valideur côté serveur (`grader/grade.py`) inspecte l'état de l'instance et ne
-> délivre un flag qu'une fois le correctif réellement appliqué. Voir
-> `docs/ADMIN_DEPLOYMENT.md`.
+> 🔒 **Anti-triche** : aucun flag n'est lisible en clair dans le conteneur
+> (`cat`/`strings` ne donnent rien — les flags sont XOR-obfusqués dans un binaire
+> compilé). `getflag` ne délivre un flag qu'une fois la faille réellement
+> corrigée. Voir la note honnête sur les limites dans `docs/ADMIN_DEPLOYMENT.md`.
 
 ### 📁 Structure du challenge
 ```
@@ -40,14 +40,13 @@ Chaque faille corrigée révèle un **flag** à soumettre dans CTFd.
 ├── setup/
 │   └── harden_setup.sh         ← Déploie l'état vulnérable au build (admin only)
 ├── audit/
-│   └── checker.c               ← Auto-évaluation joueur (progression seule, AUCUN flag)
+│   ├── checker.c               ← `audit` : progression joueur (aucun flag)
+│   └── getflag.c               ← `getflag N` : délivre le flag N si la faille est corrigée (flags XOR-obfusqués)
 ├── setup/
-│   ├── harden_setup.sh         ← Déploie l'état vulnérable au build (admin only)
-│   └── getflag                 ← Client joueur : réclame un flag au serveur (aucun flag dedans)
-├── grader/                     ← CÔTÉ SERVEUR (hors conteneur) — détient les flags
-│   ├── checks.py               ← Logique des 10 contrôles (source de vérité + flags)
-│   ├── grade.py                ← Valideur CLI (admin : --target / --ssh / --task)
-│   └── grade_server.py         ← Service HTTP interrogé par `getflag` (docker exec)
+│   └── harden_setup.sh         ← Déploie l'état vulnérable au build (admin only)
+├── grader/                     ← Outil admin OPTIONNEL de vérification hors-ligne
+│   ├── checks.py               ← Logique des 10 contrôles (référence)
+│   └── grade.py                ← Valideur CLI admin (--target / --ssh / --task)
 ├── docs/
 │   ├── USER_GUIDE.md           ← Guide joueur
 │   └── ADMIN_DEPLOYMENT.md     ← Guide admin et déploiement
