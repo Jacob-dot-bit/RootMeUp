@@ -1,6 +1,9 @@
 # 🔵 Solution Complète – Blue Team Memory Forensics
 
 > ⚠️ **SPOILERS** – Ne lisez ceci qu'après avoir tenté le challenge !
+>
+> Le **flag** est roté par déploiement (défini dans `setup/challenge.env`, jamais committé) :
+> la valeur réelle dépend de l'instance déployée. Les autres réponses sont fixes.
 
 ---
 
@@ -13,7 +16,7 @@
 | **IP du C2**           | `185.141.27.83`                            |
 | **Domaine C2**         | `c2.darkops-syndicate.net`                 |
 | **Port C2**            | `4444`                                     |
-| **Flag**               | `blue{m3m_f0r3ns1cs_v0l4t1l1ty_m4st3r}`    |
+| **Flag**               | `blue{…roté, défini dans setup/challenge.env…}`    |
 
 ---
 
@@ -171,7 +174,7 @@ C2_FALLBACK=185.141.27.83:8443
 BEACON_SLEEP=30
 XOR_KEY=X0rK3y!@#2026
 EXFIL_TAG=CONFIDENTIAL_PROJECT_OMEGA_FILES
-FLAG=blue{m3m_f0r3ns1cs_v0l4t1l1ty_m4st3r}
+FLAG=blue{…roté, défini dans setup/challenge.env…}
 ```
 
 **Chaînes SUSPECTES :**
@@ -185,7 +188,7 @@ Host: c2.darkops-syndicate.net
 powershell -ep bypass -nop -w hidden -c "IEX(...)"
 ```
 
-→ **FLAG TROUVÉ : `blue{m3m_f0r3ns1cs_v0l4t1l1ty_m4st3r}`**
+→ **FLAG TROUVÉ : `blue{…roté, défini dans setup/challenge.env…}`**
 
 ---
 

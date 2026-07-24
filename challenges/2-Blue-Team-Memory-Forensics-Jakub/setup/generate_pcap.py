@@ -31,7 +31,8 @@ VICTIM_MAC = b"\x08\x00\x27\xab\xcd\xef"
 GW_MAC     = b"\x52\x54\x00\x12\x35\x00"
 DNS_SERVER = "192.168.1.1"
 
-FLAG = "blue{m3m_f0r3ns1cs_v0l4t1l1ty_m4st3r}"
+from flag_config import resolve_flag
+FLAG = resolve_flag()
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
