@@ -22,7 +22,7 @@ par l'un des deux moyens (l'environnement a priorité sur le fichier) :
 
 **Option A — fichier `challenge.env` (recommandé)**
 ```bash
-cd challenges/3-Red-Team-Binary-Vault/setup
+cd challenges/1-Red-Team-Binary-Vault-Jakub/setup
 cp challenge.env.example challenge.env
 $EDITOR challenge.env          # renseigner LICENSE, FLAG1, FLAG2
 ```
@@ -56,7 +56,7 @@ inutilisable en prod.
 ## Build & test local
 
 ```bash
-cd challenges/3-Red-Team-Binary-Vault
+cd challenges/1-Red-Team-Binary-Vault-Jakub
 docker-compose up --build -d      # ou : docker compose up --build -d (plugin v2)
 # le service écoute sur le port 9003
 nc 127.0.0.1 9003
