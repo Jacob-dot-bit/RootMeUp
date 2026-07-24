@@ -5,29 +5,32 @@ Analyser un dump mémoire Windows compromis pour identifier le processus malveil
 
 ## Accès au challenge (via CTFd)
 
-1. Connectez-vous avec votre compte joueur.
-2. Ouvrez le challenge `Blue Team - Jakub - Memoire et analyse de malware (Volatility)`.
-3. Cliquez sur `Start Instance` et notez l'URL d'instance fournie par CTFd.
-4. Téléchargez les artefacts depuis l'URL d'instance :
-   ```
-   http://<instance>:8000/memory.dmp
-   http://<instance>:8000/network_capture.pcap
-   http://<instance>:8000/hints.txt
-   ```
+Ce challenge est un **environnement d'analyse fourni** : tout est déjà installé,
+tu n'as **rien à mettre en place** sur ta machine.
 
-## Outils d'analyse
+1. Connecte-toi avec ton compte joueur et ouvre le challenge.
+2. Clique sur **Start Instance** : CTFd t'affiche une **adresse** et un **port**.
+3. Connecte-toi en **SSH** à la boîte d'analyse :
+   ```bash
+   ssh analyst@<IP> -p <PORT>
+   # mot de passe : forensics
+   ```
+4. Tu arrives dans un shell où le dump et les outils sont **déjà en place**
+   (le message d'accueil rappelle les commandes).
+
+## Outils d'analyse (déjà dans la boîte)
 
 > ⚠️ **Important** : le dump `memory.dmp` est dans un **format pédagogique dédié à ce
 > challenge**, pas une image mémoire brute standard. Le vrai Volatility 3 (`vol.py`) ne
 > sait pas le lire, et un `strings` classique ne révèle pas le flag (il est encodé).
-> Utilisez l'**outil fourni dans le conteneur** : `tools/vol_analyzer.py` (un
-> « mini‑Volatility » qui reproduit les commandes `windows.*` sur ce format).
+> Utilise l'outil fourni : **`vol_analyzer.py`** (un « mini‑Volatility » qui reproduit
+> les commandes `windows.*` sur ce format).
 
-Depuis le terminal du challenge (ou après avoir récupéré les fichiers du dépôt) :
+Dans ton home (`~`) :
 
 ```bash
 # Syntaxe générale
-python3 tools/vol_analyzer.py -f challenge/memory.dmp <commande>
+python3 vol_analyzer.py -f memory.dmp <commande>
 
 # Commandes disponibles :
 #   windows.info      windows.pslist     windows.pstree    windows.netscan
@@ -35,13 +38,14 @@ python3 tools/vol_analyzer.py -f challenge/memory.dmp <commande>
 #   windows.strings   windows.registry
 ```
 
-Outils complémentaires :
-- **`tools/extract_strings.py`** — extraction/décodage des chaînes du binaire extrait.
-- **Wireshark / `tshark`** — analyse du PCAP réseau (`network_capture.pcap`) pour l'étape bonus.
+Fichiers et outils complémentaires :
+- **`memory.dmp`** — le dump à analyser · **`network_capture.pcap`** — capture réseau (bonus) · **`hints.txt`** — indices.
+- **`extract_strings.py`** — extraction/décodage des chaînes.
+- **`check_flag.py`** — auto-vérification hors ligne de tes réponses (optionnel).
 
 ## Piste de résolution
 
-Toutes les commandes ci-dessous se lancent via `python3 tools/vol_analyzer.py -f challenge/memory.dmp <commande>`.
+Toutes les commandes ci-dessous se lancent via `python3 vol_analyzer.py -f memory.dmp <commande>`, **dans la boîte SSH**.
 
 1. `windows.pslist` / `windows.pstree` — cherchez un nom ou une hiérarchie suspecte.
 2. Identifiez le processus suspect en regardant son PPID et sa session.
@@ -54,7 +58,7 @@ Toutes les commandes ci-dessous se lancent via `python3 tools/vol_analyzer.py -f
 `blue{...}`
 
 ## Soumission
-Soumettez le flag final dans CTFd depuis la page du challenge.
+Soumets tes réponses dans CTFd (série de flags : PID, exécutable, IP/domaine/port du C2, flag final).
 
 ## Indices
-Si vous êtes bloqué, consultez `hints.txt` téléchargé depuis l'instance.
+Si tu es bloqué, consulte `hints.txt` (dans ton home sur la boîte SSH).

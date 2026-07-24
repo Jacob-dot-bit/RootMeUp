@@ -1,5 +1,8 @@
 # =============================================================================
-#  Blue Team CTF – Docker Compose
+#  Blue Team CTF – Docker Compose (test local)
+#  Boîte d'analyse SSH : le joueur se connecte via ssh.
+#  En prod, le plugin CTFdDockerContainersPlugin alloue le port dynamiquement
+#  (port interne du challenge dans CTFd = 22).
 # =============================================================================
 
 services:
@@ -8,9 +11,6 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: blueteam-memory-forensics
-    stdin_open: true    # -i : garder stdin ouvert
-    tty: true           # -t : allouer un pseudo-TTY
-    volumes:
-      # Le rapport est partagé avec l'hôte pour pouvoir le récupérer
-      - ./report:/challenge/report
-    # Pas de ports exposés : le challenge est 100% en CLI dans le conteneur
+    ports:
+      - "2222:22"   # test local :  ssh analyst@127.0.0.1 -p 2222  (mot de passe : forensics)
+    restart: unless-stopped

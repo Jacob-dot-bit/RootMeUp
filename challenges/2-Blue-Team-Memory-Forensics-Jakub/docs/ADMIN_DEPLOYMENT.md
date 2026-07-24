@@ -1,107 +1,83 @@
-# Blue Team Memory Forensics - Guide Admin/Deploiement
+# Blue Team Memory Forensics — Guide Admin / Déploiement
 
-## 1) Build de l'image
-Depuis `challenges/2-Blue-Team-Memory-Forensics`:
+Challenge de type **container** : une **boîte d'analyse accessible en SSH**. Le joueur
+fait *Start Instance*, se connecte en SSH, et analyse le dump avec les outils déjà en
+place (rien à installer côté joueur).
 
-```bash
-docker build -t blue-team-memory-forensics:latest .
-```
+## 1) Fournir le flag (ne PAS le committer)
 
-## 2) Test local (mode dual : HTTP + terminal)
-
-Lancer le conteneur localement pour vérifier que tout fonctionne :
+Le flag n'est pas codé en dur : il vient d'un fichier gitignoré, puis est cuit dans le
+dump/PCAP au build, et son hash SHA256 est généré pour l'auto-vérification.
 
 ```bash
-docker run -it --rm -p 8000:8000 blue-team-memory-forensics:latest
-```
-
-- **HTTP (port 8000)** : artefacts disponibles à `http://localhost:8000/`
-- **Terminal interactif** : outils d'analyse (`vol_analyzer.py`) utilisables directement
-
-## 3) Export et transfert vers le serveur
-```bash
-docker save -o blue-team-memory-forensics.tar blue-team-memory-forensics:latest
-scp -i "<SSH_KEY_PATH>" ".\blue-team-memory-forensics.tar" jakub@<IP_TAILSCALE_VM>:/tmp/
-```
-
-## 4) Import sur le serveur
-```bash
-docker load -i /tmp/blue-team-memory-forensics.tar
-docker images | grep blue-team-memory-forensics
-```
-
-## 5) Configuration CTFd (soutenance)
-Challenge type: `container`
-
-- **Name**: `Blue Team - Jakub - Memoire et analyse de malware (Volatility)`
-- **Category**: `Blue Team`
-- **Image**: `blue-team-memory-forensics:latest`
-- **Port**: `8000`
-- **Command**: laisser vide (l'entrypoint gère tout : HTTP + terminal)
-- **Initial Value**: `100`
-- **Decay Limit**: `0`
-- **Minimum Value**: `100`
-- **Volumes**: vide
-
-> **Note** : Le conteneur démarre automatiquement :
-> 1. Un serveur HTTP sur le port 8000 → les joueurs téléchargent les artefacts via l'URL CTFd
-> 2. Un terminal bash → accessible via `docker exec` pour les tests admin
-
-## 6) Creation du flag (obligatoire)
-Dans l'onglet `Flags`:
-- **Type**: `Static`
-- **Valeur**: la valeur définie dans `setup/challenge.env` (`FLAG=...`) — **pas** de flag en clair dans le dépôt. Voir « Fournir le flag » ci-dessous.
-- **Case Sensitive**: activé
-
-## 7) Sequence de validation
-1. Laisser le challenge en `Hidden`.
-2. Tester `Start Instance` avec un compte joueur.
-3. Vérifier l'accès HTTP aux fichiers : `http://<instance>:8000/memory.dmp`
-4. Vérifier que `hints.txt` et `network_capture.pcap` sont bien accessibles.
-5. Soumettre le flag (celui de `challenge.env`) pour valider.
-6. Passer en `Visible`.
-
-## Fournir le flag (ne PAS le committer)
-
-Le flag n'est plus codé en dur : il est fourni au build via un fichier gitignoré,
-puis cuit dans le dump + le PCAP, et son hash SHA256 est généré pour le validateur.
-
-```bash
-cd setup
+cd challenges/2-Blue-Team-Memory-Forensics-Jakub/setup
 cp challenge.env.example challenge.env
 $EDITOR challenge.env            # FLAG=blue{...}  (choisir une valeur rotée)
 ```
-Puis (re)builder l'image ; `gen`/`generate_challenge.py` lit `challenge.env` automatiquement.
-Si aucun `challenge.env` n'est fourni, le build réussit mais avec un flag **placeholder**
-(`blue{PLACEHOLDER_...}`). Le même flag doit être saisi côté CTFd (étape 6).
+Si aucun `challenge.env` n'est fourni, le build réussit mais avec un flag **placeholder**.
 
-> ⚠️ Rotation : l'ancien flag `blue{m3m_f0r3ns1cs_v0l4t1l1ty_m4st3r}` est resté public
-> dans l'historique git — choisir une **nouvelle** valeur dans `challenge.env`.
+> ⚠️ Rotation : l'ancien flag est resté public dans l'historique git — choisir une
+> **nouvelle** valeur dans `challenge.env`.
 
-## 8) Troubleshooting
-Si l'instance ne démarre pas :
+## 2) Build de l'image
 
 ```bash
-docker ps -a
-docker logs <container_id>
+sudo docker build -t rootmeup/bt2-memory-forensics:1.0 \
+  /srv/ctf-challenges/RootMeUp/challenges/2-Blue-Team-Memory-Forensics-Jakub
 ```
 
-Si l'image n'existe pas :
+## 3) Test local
 
 ```bash
-docker load -i /tmp/blue-team-memory-forensics.tar
+docker compose up --build -d          # expose 2222->22
+ssh analyst@127.0.0.1 -p 2222         # mot de passe : forensics
+# dans la boîte :
+python3 vol_analyzer.py -f memory.dmp windows.pslist
 ```
 
-Si le port 8000 ne répond pas :
-
+Vérifier que le flag roté est bien cuit dans le dump :
 ```bash
-# Vérifier que le serveur HTTP tourne dans le conteneur
-docker exec <container_id> ps aux | grep http.server
+sudo docker run --rm --entrypoint python3 rootmeup/bt2-memory-forensics:1.0 \
+  vol_analyzer.py -f memory.dmp windows.strings --pid 6847 | grep -i FLAG=
 ```
 
-## 9) Accès terminal admin (debug)
+## 4) Configuration CTFd
+
+Identifiants SSH de la boîte : **`analyst` / `forensics`** (dans l'énoncé joueur).
+
+**Challenge « point d'entrée » (type `container`)** — porte le bouton *Start Instance* :
+- **Type** : `container`
+- **Image** : `rootmeup/bt2-memory-forensics:1.0`
+- **Port** : `22`
+- **Connection Info** *(obligatoire, sinon pas de bouton)* :
+  `Connectez-vous : ssh analyst@100.118.132.76 -p [port instance]  (mot de passe : forensics)`
+- **Flag** : le PID → `6847` (Static, case sensitive)
+
+**Série de flags** (catégorie `Blue Team — Memory Forensics`), les suivants en type `standard` :
+
+| Flag | Question | Réponse |
+|---|---|---|
+| 1 (container) | PID du processus malveillant | `6847` |
+| 2 (standard) | Nom de l'exécutable | `svchost_update.exe` |
+| 3 (standard) | IP du serveur C2 | `185.141.27.83` |
+| 4 (standard) | Domaine du C2 | `c2.darkops-syndicate.net` |
+| 5 (standard) | Port du C2 | `4444` |
+| 6 (standard) | Flag final | valeur de `challenge.env` (`blue{...}`) |
+
+## 5) Séquence de validation
+
+1. Laisser en `Hidden`.
+2. *Start Instance* avec un compte de test → récupérer l'adresse/port.
+3. `ssh analyst@<ip> -p <port>` (mdp `forensics`) → le shell doit s'ouvrir sur le home
+   avec `memory.dmp` et les outils.
+4. Lancer `python3 vol_analyzer.py -f memory.dmp windows.pslist` → doit fonctionner.
+5. Soumettre les 6 réponses dans CTFd → toutes acceptées.
+6. Passer en `Visible`.
+
+## 6) Troubleshooting
+
 ```bash
-docker exec -it <container_id> bash
-# Puis utiliser les outils d'analyse :
-python3 tools/vol_analyzer.py -f challenge/memory.dmp windows.pslist
+sudo docker ps -a                       # l'instance tourne ? (mapping ...->22/tcp)
+sudo docker logs <container_id>         # erreurs sshd ?
+# « Could not get port » côté plugin → vérifier que l'image a bien EXPOSE 22 (c'est le cas).
 ```

@@ -1,74 +1,47 @@
 # =============================================================================
-#  Blue Team CTF – Memory Forensics Challenge (Container)
+#  Blue Team CTF – Mémoire & Analyse de Malware (environnement d'analyse SSH)
 # =============================================================================
-#  Stage 1 : Génère le dump mémoire et le PCAP
-#  Stage 2 : Image légère avec uniquement les outils d'analyse + les fichiers
+#  Stage 1 : génère le dump mémoire + le PCAP (flag lu depuis challenge.env)
+#  Stage 2 : boîte d'analyse accessible en SSH — dump + outils déjà en place,
+#            le joueur se connecte et analyse dedans (rien à installer chez lui)
 # =============================================================================
 
 # ── Stage 1 : Builder (génération des artefacts) ─────────────────────────────
 FROM python:3.11-slim AS builder
-
 WORKDIR /build
-
-# Copier les scripts de génération
 COPY setup/ ./setup/
-
-# Installer les dépendances de génération
 RUN pip install --no-cache-dir -r setup/requirements.txt
-
-# Générer le dump mémoire et le PCAP
-RUN python setup/generate_challenge.py && \
-    python setup/generate_pcap.py
+RUN python setup/generate_challenge.py && python setup/generate_pcap.py
 
 
-# ── Stage 2 : Image finale (challenge) ───────────────────────────────────────
+# ── Stage 2 : Boîte d'analyse SSH ────────────────────────────────────────────
 FROM python:3.11-slim
 
 LABEL maintainer="Jakub – ESGI Projet Annuel 2026"
-LABEL description="Blue Team CTF – Mémoire et Analyse de Malware"
-
-# Empêcher Python de bufferiser stdout/stderr
+LABEL description="Blue Team CTF – Mémoire et Analyse de Malware (SSH)"
 ENV PYTHONUNBUFFERED=1
-ENV TERM=xterm-256color
 
-WORKDIR /challenge
-
-# Copier les artefacts générés depuis le builder
-COPY --from=builder /build/challenge/ ./challenge/
-
-# Copier les outils d'analyse (accessibles au joueur)
-COPY tools/ ./tools/
-
-# Copier le template de rapport
-COPY report/ ./report/
-
-# Copier le script de validation (le joueur peut valider ses réponses)
-COPY solution/validate_flag.py ./solution/validate_flag.py
-
-# Hash SHA256 du flag (généré au build depuis challenge.env) — jamais le flag en clair
-COPY --from=builder /build/valout/flag.sha256 ./solution/flag.sha256
-
-# Copier le README
-COPY README.md ./README.md
-
-# Copier le script d'accueil
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-# Créer un utilisateur non-root pour le joueur
-RUN useradd -m -s /bin/bash analyst && \
-    chown -R analyst:analyst /challenge
-
-# Installer les outils utiles pour l'analyse
+# Serveur SSH + petits utilitaires d'analyse (les outils Python n'ont besoin
+# que de la stdlib, déjà présente).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    less \
-    nano \
-    vim-tiny \
-    xxd \
-    file \
-    && rm -rf /var/lib/apt/lists/*
+        openssh-server less nano vim-tiny xxd file && \
+    rm -rf /var/lib/apt/lists/* && \
+    mkdir -p /run/sshd && ssh-keygen -A
 
-USER analyst
+# Utilisateur joueur (identifiants communiqués dans l'énoncé CTFd).
+# Pas de root en SSH ; authentification par mot de passe autorisée.
+RUN useradd -m -s /bin/bash analyst && echo 'analyst:forensics' | chpasswd && \
+    sed -i 's/#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config && \
+    sed -i 's/#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
 
-ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["/bin/bash"]
+# Environnement d'analyse dans le home du joueur
+WORKDIR /home/analyst
+COPY --from=builder /build/challenge/ ./
+COPY tools/vol_analyzer.py tools/extract_strings.py ./
+COPY solution/validate_flag.py ./check_flag.py
+COPY --from=builder /build/valout/flag.sha256 ./flag.sha256
+COPY mission.txt /etc/motd
+RUN chown -R analyst:analyst /home/analyst
+
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D", "-e"]

@@ -1,0 +1,30 @@
+========================================================================
+  BLUE TEAM CTF  —  Mémoire & Analyse de Malware
+========================================================================
+
+Contexte : la machine Windows DESKTOP-F4K3LAB a été compromise. Un dump
+mémoire a été capturé avant son isolation. Un implant en mémoire communique
+avec un serveur C2. À toi d'analyser le dump et de répondre aux questions.
+
+Fichiers (dans ton dossier ~) :
+  memory.dmp            le dump mémoire à analyser
+  network_capture.pcap  capture réseau (bonus)
+  hints.txt             indices si tu es bloqué
+
+Outils (déjà installés ici) :
+  python3 vol_analyzer.py -f memory.dmp <commande>
+     commandes : windows.info | pslist | pstree | netscan | malfind |
+                 dlllist | handles | dumpfiles | strings | registry
+  python3 extract_strings.py <fichier>
+
+Commence par :
+  python3 vol_analyzer.py -f memory.dmp windows.pslist
+
+Auto-vérification (optionnel, hors ligne) :
+  python3 check_flag.py
+
+/!\ Le dump est dans un format dédié à ce challenge : utilise vol_analyzer.py,
+    et non un Volatility standard.
+
+Soumets tes réponses dans CTFd. Bon courage.
+========================================================================
