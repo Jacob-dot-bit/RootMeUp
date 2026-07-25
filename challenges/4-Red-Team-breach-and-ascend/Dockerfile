@@ -38,8 +38,14 @@ COPY web/ /var/www/html/
 # Le dossier de dépôt doit être inscriptible par Apache (www-data),
 # sans recourir à un chmod 777 : www-data comme propriétaire suffit.
 # On supprime aussi la page par défaut de Debian pour que "/" serve index.php.
+#
+# Normalisation EXPLICITE des permissions : on ne dépend pas du umask du
+# contexte de build (un transfert en umask 027 produit des fichiers 640/750
+# que www-data ne peut pas lire -> 500 sur index.php, CSS et config.php KO).
 RUN rm -f /var/www/html/index.html \
     && chown -R root:root /var/www/html \
+    && find /var/www/html -type d -exec chmod 755 {} + \
+    && find /var/www/html -type f -exec chmod 644 {} + \
     && chown -R www-data:www-data /var/www/html/uploads \
     && chmod 755 /var/www/html/uploads
 
