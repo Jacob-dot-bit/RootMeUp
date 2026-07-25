@@ -1,10 +1,11 @@
-[MERIDIAN INTERNAL - Quarterly credentials rotation - Analysts]
+[PERSONNEL - r.dubois - ne pas partager]
 
-user: r.dubois
-password: An4lyst#Secure99
+Rappel mot de passe (je l'oublie tout le temps depuis la rotation trimestrielle) :
 
--- IT Ops
-Please rotate again before end of quarter, and stop storing these
-in plaintext once the vault migration is done.
+  user: r.dubois
+  password: An4lyst#Secure99
 
-flag: MERIDIAN{cr0n_j0bs_ar3_g0ld_9d17f3}
+Note : ce fichier est en 600, personne d'autre que moi ne peut le lire...
+enfin, tant que personne ne fait tourner de job à ma place.
+
+flag: RootMeUp{cr0n_j0bs_ar3_g0ld_9d17f3}

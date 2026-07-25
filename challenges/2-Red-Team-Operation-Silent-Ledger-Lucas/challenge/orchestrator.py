@@ -16,6 +16,29 @@ import threading
 SOCK_PATH = "/run/meridian/orchestrator.sock"
 TOKEN_FILE = "/root/.orchestrator_token"
 
+# ---------------------------------------------------------------------------
+# Flag 8 lives ONLY in this process's memory.
+#
+# It is loaded from a root-owned file at startup, and that file is deleted
+# immediately afterwards. This means the flag cannot be obtained by any
+# arbitrary-file-read primitive (e.g. the cap_dac_read_search binary of flag 7,
+# which bypasses DAC read checks but cannot read another process's heap): the
+# ONLY way to recover it is to achieve code execution *inside* this process,
+# i.e. by actually exploiting the insecure-deserialization vulnerability below.
+# ---------------------------------------------------------------------------
+FLAG8 = "MISSING"
+
+
+def _load_flag8():
+    global FLAG8
+    src = "/root/vault/.flag8"
+    try:
+        with open(src) as f:
+            FLAG8 = f.read().strip()
+        os.remove(src)  # scrub from disk; only the in-memory copy remains
+    except OSError:
+        FLAG8 = "MISSING"
+
 
 def load_token():
     with open(TOKEN_FILE) as f:
@@ -73,6 +96,7 @@ class ThreadingUnixServer(socketserver.ThreadingMixIn, socketserver.UnixStreamSe
 
 
 def main():
+    _load_flag8()
     os.makedirs(os.path.dirname(SOCK_PATH), exist_ok=True)
     if os.path.exists(SOCK_PATH):
         os.remove(SOCK_PATH)
