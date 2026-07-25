@@ -89,7 +89,7 @@ se fait **une fois** par challenge/serveur (et à chaque changement de code ou d
 | Challenge (dossier) | Image | Port | Accès joueur |
 |---|---|---|---|
 | `1-Blue-Team-Phishing-ELK-Sarah` | `rootmeup/bt1-phishing-elk:1.0` | (voir Dockerfile) | HTTP (Kibana) |
-| `2-Blue-Team-Memory-Forensics-Jakub` | `rootmeup/bt2-memory-forensics:1.0` | `8000` | HTTP (download dump/pcap) |
+| `2-Blue-Team-Memory-Forensics-Jakub` | `rootmeup/bt2-memory-forensics:1.0` | `22` | SSH (`analyst`/`forensics`) — boîte d'analyse, dump + outils dedans |
 | `1-Red-Team-Binary-Vault-Jakub` | `rootmeup/rt1-binary-vault:1.0` | `9003` | `nc <ip> <port>` |
 | `2-Red-Team-Operation-Silent-Ledger-Lucas` | `rootmeup/rt2-silent-ledger:1.0` | (voir Dockerfile) | SSH / service |
 | `3-Red-Team-Nexus-Cipher-Sarah` | `rootmeup/rt3-ciphers-nexus:1.0` | (voir Dockerfile) | HTTP (API) |
