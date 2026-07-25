@@ -6,14 +6,25 @@ plein**) plutôt que de les subir.
 
 ## Architecture
 
-```
-   VM Grafana (Tailscale 100.84.158.83)        VM CTF (100.118.132.76)
-   ┌─────────────────────────────┐             ┌──────────────────────────┐
-   │ Grafana        :3000         │             │ node_exporter   :9100    │
-   │ Prometheus     :9090  ──────────scrape────►│ (métriques système)      │
-   │  └─ règles d'alerte          │             │ CTFd (Apache :80)        │
-   │        └─► Discord (webhook) │             └──────────────────────────┘
-   └─────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph grafana_vm["VM Grafana — Tailscale 100.84.158.83"]
+        direction TB
+        prometheus["Prometheus :9090<br/>(scrape /15 s)"]
+        grafana["Grafana :3000<br/>dashboards + règles d'alerte"]
+        prometheus --> grafana
+    end
+
+    subgraph ctf_vm["VM CTF — 100.118.132.76"]
+        direction TB
+        node["node_exporter :9100<br/>(CPU / RAM / disque / réseau)"]
+        ctfd["CTFd (Apache :80)"]
+    end
+
+    discord["🔔 Discord<br/>(webhook — secret)"]
+
+    prometheus -->|scrape| node
+    grafana -->|alertes| discord
 ```
 
 - **node_exporter** (sur la VM CTF) : expose CPU / RAM / disque / réseau.

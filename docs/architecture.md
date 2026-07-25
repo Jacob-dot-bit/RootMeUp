@@ -1,6 +1,24 @@
-![schéma](./diagram.png)
-
 # Architecture RootMeUp
+
+```mermaid
+flowchart LR
+    joueur["👤 Joueur<br/>(navigateur / SSH / nc)"]
+
+    subgraph tailnet["Réseau privé Tailscale"]
+        direction TB
+        subgraph vm["VM Debian durcie (CIS)"]
+            apache["Apache<br/>reverse-proxy :80"]
+            ctfd["CTFd<br/>(systemd, gunicorn :8000)"]
+            plugin["CTFdDockerContainersPlugin"]
+            docker["Docker + containerd"]
+            inst["Instances de challenges<br/>(1 conteneur / équipe)"]
+        end
+    end
+
+    joueur -->|VPN| apache --> ctfd --> plugin
+    plugin -->|pilote| docker --> inst
+    joueur -.->|accès direct à l'instance<br/>port dynamique| inst
+```
 
 ## Composants
 

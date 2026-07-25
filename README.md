@@ -9,7 +9,25 @@ Plateforme CTF open-source pour étudiants et professionnels cybersécurité. Ch
 
 ## Architecture
 
-![Schéma d'architecture](docs/diagram.png)
+```mermaid
+flowchart LR
+    joueur["👤 Joueur<br/>(navigateur / SSH / nc)"]
+
+    subgraph tailnet["Réseau privé Tailscale"]
+        direction TB
+        subgraph vm["VM Debian durcie (CIS)"]
+            apache["Apache<br/>reverse-proxy :80"]
+            ctfd["CTFd<br/>(systemd, gunicorn :8000)"]
+            plugin["CTFdDockerContainersPlugin"]
+            docker["Docker + containerd"]
+            inst["Instances de challenges<br/>(1 conteneur / équipe)"]
+        end
+    end
+
+    joueur -->|VPN| apache --> ctfd --> plugin
+    plugin -->|pilote| docker --> inst
+    joueur -.->|accès direct à l'instance<br/>port dynamique| inst
+```
 
 Le serveur est une VM Debian durcie selon le benchmark CIS, qui héberge :
 - **CTFd** : géré comme un service systemd, accessible sur le port 8000
@@ -65,7 +83,8 @@ Numérotation par équipe (`N-Blue-Team-*` / `N-Red-Team-*`).
 | Red 2 | `challenges/2-Red-Team-Operation-Silent-Ledger-Lucas` | Opération Silent Ledger — machine Linux compromise (SSH → escalade → GPG) | Red Team | Intégré |
 | Blue 3 | `challenges/3-Blue-Team-Hardening-Lucas` | Hardening / durcissement système | Blue Team | Intégré |
 | Red 3 | `challenges/3-Red-Team-Nexus-Cipher-Sarah` | Cipher — pentest du portail API Nexus (crypto/web, 10 flags) | Red Team | Intégré |
-| Blue 4 / Red 4 | _à venir_ | — | — | À faire |
+| Red 4 | `challenges/4-Red-Team-breach-and-ascend` | Breach & Ascend — intrusion web (upload) puis élévation → root | Red Team | En cours |
+| Blue 4 | _à venir_ | — | — | À faire |
 
 ## Ajout d'un challenge sur le serveur
 
