@@ -2,7 +2,7 @@
 
 Plateforme CTF open-source pour étudiants et professionnels cybersécurité. Challenges progressifs Blue/Red Team, conteneurisés et isolés par équipe.
 
-> **Projet Annuel — ESGI** · <!-- TODO: promo/année, ex. « 4ᵉ année cybersécurité — 2025-2026 » --> `<promo / année>`
+> **Projet Annuel — ESGI** · Mastère Sécurité Informatique · 4ᵉ année (M1) · 2025-2026
 > Équipe de 4 étudiants. Ce dépôt est la **face technique** (jury/mainteneurs) ; le dépôt
 > [**RootMeUp-CTF**](https://github.com/Jacob-dot-bit/RootMeUp-CTF) est destiné aux **joueurs**
 > (guides uniquement, sans solutions ni flags).
@@ -99,9 +99,7 @@ http://<IP_TAILSCALE_VM>/
 
 5. Créer un compte, rejoindre ou créer une équipe (3 participants max)
 
-<!-- TODO: ajouter une capture — déposer le fichier dans docs/img/ puis décommenter :
 ![Interface CTFd — liste des challenges](docs/img/ctfd-challenges.png)
--->
 
 > ℹ️ **Vous êtes joueur ?** Les guides pas-à-pas (sans solutions) sont dans le dépôt
 > dédié [**RootMeUp-CTF**](https://github.com/Jacob-dot-bit/RootMeUp-CTF).
@@ -113,6 +111,8 @@ http://<IP_TAILSCALE_VM>/
 3. Cliquer sur **Start Instance** — CTFdDockerContainersPlugin crée une instance Docker dédiée à votre équipe
 4. Se connecter à l'instance via l'URL/port indiqués
 5. Soumettre le flag dans l'interface CTFd
+
+![Instance de challenge lancée dans CTFd](docs/img/ctfd-instance.png)
 
 ## Challenges disponibles
 
@@ -180,6 +180,8 @@ Mesures appliquées conformément au benchmark CIS Debian :
 
 Le serveur CTFd est supervisé (métriques temps réel + alertes Discord) via une VM
 Grafana + Prometheus dédiée. Détail : **[`docs/SUPERVISION.md`](docs/SUPERVISION.md)**.
+
+![Dashboard Grafana — Node Exporter Full (VM CTFd)](docs/img/grafana-dashboard.png)
 
 ## Équipe projet
 
