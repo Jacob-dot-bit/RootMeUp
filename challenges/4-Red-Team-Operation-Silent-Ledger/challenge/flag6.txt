@@ -3,6 +3,6 @@ Injection de commande dans un binaire SUID. Tu tournes maintenant en svc_orch
 
 flag: RootMeUp{su1d_b1nar13s_l13_0ft3n_2f6b58}
 
-Indice suivant : verifie tes capabilities effectives avant de chercher encore
-une regle sudo. Tout ne passe pas par root.
-  getcap -r / 2>/dev/null
+Indice suivant : tu controles le compte de l'agent de flotte. Les agents
+stockent souvent leurs identifiants en clair -> fouille sa config locale
+(~/.fleet-agent/).

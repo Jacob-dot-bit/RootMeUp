@@ -7,10 +7,7 @@ Format des flags : `RootMeUp{...}` (statique, sensible à la casse)
 > image `rootmeup/rt2-silent-ledger:1.0`, port **22/tcp**). **Flags 2 → 10** =
 > type *standard*, chacun avec en **Requirements** la question précédente
 > (chaîne linéaire F1→…→F10). Le joueur reste sur la même instance du 1er au
-> dernier flag.
->
-> ⚠️ L'instance DOIT être lancée avec `--cap-add DAC_READ_SEARCH` (flag 7).
-> Voir `docs/CTFD_SETUP.md`.
+> dernier flag. Aucune option de lancement particulière (juste image + port 22).
 
 ---
 
@@ -82,11 +79,12 @@ SUID, puis étudiez ce qu'ils exécutent.)
 
 ---
 
-## Flag 7 — Pouvoirs spéciaux (200 pts) — standard · Prérequis : F6
-Root n'est pas le seul moyen de contourner les permissions de fichiers sous
-Linux. (`getcap -r / 2>/dev/null`.)
+## Flag 7 — Le trousseau de l'agent (200 pts) — standard · Prérequis : F6
+Vous contrôlez le compte de service de l'agent de flotte. Les agents stockent
+souvent leurs identifiants en clair : pillez sa configuration locale pour
+récupérer le token de l'orchestrateur. (Fouillez le home / `.fleet-agent`.)
 
-**Flag :** `RootMeUp{cap4bilit13s_ar3_p0w3r_5c2d71}`
+**Flag :** `RootMeUp{ag3nt_t0k3n_l00t3d_5c2d71}`
 
 ---
 

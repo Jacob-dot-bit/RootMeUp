@@ -2,15 +2,12 @@
 # Meridian Capital - Operation SILENT LEDGER
 # Red Team post-exploitation CTF instance (single container, 10 flags)
 #
-# ⚠️ RUNTIME REQUIREMENT: flag 7 relies on the file capability
-# cap_dac_read_search, which is NOT part of Docker's default capability set.
-# The instance MUST be started with:  --cap-add DAC_READ_SEARCH
-# (see docs/CTFD_SETUP.md). DAC_READ_SEARCH is read-only, so it cannot be
-# abused to gain root -- unlike DAC_OVERRIDE, which we deliberately avoid.
+# Aucune option de lancement requise : un simple `docker run -p ...:22 <image>`
+# suffit (pas de --cap-add, pas de --privileged).
 #
 # DESIGN: the privilege chain is strictly monotonic (one lateral move per step,
-# root only at the very last system step, flag 8 lives only in the
-# orchestrator's memory). See docs/ARCHITECTURE.md.
+# root only at the very last system step via the orchestrator RCE, flag 8 lives
+# only in the orchestrator's memory). See docs/ARCHITECTURE.md.
 # =============================================================================
 
 # ---------------------------------------------------------------------------
@@ -48,7 +45,7 @@ RUN gpg --batch --yes --pinentry-mode loopback --passphrase "482913" \
 FROM debian:bookworm-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        openssh-server sudo cron python3 libcap2-bin procps \
+        openssh-server sudo cron python3 procps \
         zip unzip gnupg less nano binutils strace gdb file \
     && rm -rf /var/lib/apt/lists/* \
     && mkdir -p /var/run/sshd /opt/meridian /opt/scripts /var/log/meridian \
@@ -99,13 +96,13 @@ COPY --from=builder /out/logviewer /usr/local/bin/logviewer
 RUN echo "app started ok" > /var/log/meridian/app.log
 COPY challenge/flag6.txt /home/svc_orch/flag6.txt
 
-# --- F7: Linux capability (svc_orch reads root-only files) ------------------
-# py-agent is a copy of python3, executable ONLY by svc_orch (mode 700), so the
-# cap cannot be abused before the chain reaches svc_orch. Read-only capability.
-RUN cp /usr/bin/python3 /usr/local/bin/py-agent \
-    && setcap cap_dac_read_search+ep /usr/local/bin/py-agent
-COPY challenge/flag7.txt /root/flag7.txt
-COPY challenge/readme_orchestrator.txt /root/README_orchestrator.txt
+# --- F7: post-compromission looting (svc_orch reste le compte) -------------
+# Aucune capability requise (donc AUCUN --cap-add au run). Le token de
+# l'orchestrateur est stocke EN CLAIR dans la config locale de l'agent, lisible
+# uniquement une fois svc_orch compromis (fichier 600 svc_orch). Butin classique.
+RUN mkdir -p /home/svc_orch/.fleet-agent
+COPY challenge/agent_config.ini /home/svc_orch/.fleet-agent/config.ini
+# Le daemon (root) lit sa copie du token depuis un fichier root-only :
 COPY challenge/orchestrator_token.txt /root/.orchestrator_token
 
 # --- F8: orchestrator daemon (insecure deserialization -> root) ------------
@@ -132,17 +129,14 @@ RUN chown j.martin:j.martin /home/j.martin/welcome_note.txt /home/j.martin/.bash
     && chown svc_orch:orch /usr/local/bin/logviewer && chmod 4750 /usr/local/bin/logviewer \
     && chmod 644 /var/log/meridian/app.log \
     && chown svc_orch:svc_orch /home/svc_orch/flag6.txt && chmod 600 /home/svc_orch/flag6.txt \
-    && chown svc_orch:svc_orch /usr/local/bin/py-agent && chmod 700 /usr/local/bin/py-agent \
-    && chown root:root /root/flag7.txt /root/README_orchestrator.txt /root/.orchestrator_token \
-    && chmod 600 /root/flag7.txt /root/.orchestrator_token && chmod 644 /root/README_orchestrator.txt \
+    && chown -R svc_orch:svc_orch /home/svc_orch/.fleet-agent \
+    && chmod 700 /home/svc_orch/.fleet-agent && chmod 600 /home/svc_orch/.fleet-agent/config.ini \
+    && chown root:root /root/.orchestrator_token && chmod 600 /root/.orchestrator_token \
     && chown root:root /opt/meridian/orchestrator.py /root/vault/.flag8 /root/vault/vault.zip \
     && chmod 600 /opt/meridian/orchestrator.py /root/vault/.flag8 /root/vault/vault.zip \
     && chown root:root /root/.encrypted/final.gpg /root/.encrypted/pin.hash \
     && chmod 600 /root/.encrypted/final.gpg /root/.encrypted/pin.hash \
     && chmod 700 /root/vault /root/.encrypted
-
-# Re-assert the capability after chown (chown clears file capabilities!)
-RUN setcap cap_dac_read_search+ep /usr/local/bin/py-agent
 
 # --- SSH config ---------------------------------------------------------
 # Only the three human accounts can log in over SSH. Service accounts

@@ -31,19 +31,14 @@ Dans l'admin CTFd → onglet du plugin Docker :
 3. Vérifiez que le réseau Docker utilisé pour ces instances **n'a pas d'accès
    sortant à Internet** (bridge isolé / `--internal`). Rien dans ce challenge n'en
    a besoin, et ça évite qu'une instance compromise serve de relais.
-4. ⚠️ **CAPABILITY REQUISE — `--cap-add DAC_READ_SEARCH`.** Le flag 7 repose sur
-   la capability `cap_dac_read_search`, qui **ne fait pas partie** des
-   capabilities Docker par défaut : sans elle, `py-agent` ne peut rien lire et le
-   flag 7 devient impossible. Configurez le plugin pour lancer les instances de
-   cette image avec `--cap-add DAC_READ_SEARCH` (champ « extra flags » / options
-   du plugin selon la version). N'ajoutez **rien d'autre** (surtout pas
-   `--privileged` ni `--cap-add DAC_OVERRIDE`, qui casseraient l'isolation).
-   Limites conseillées : `--pids-limit 512 --memory 512m --cpus 1`.
+4. ✅ **Aucune capability ni option spéciale requise.** L'image tourne avec un
+   simple `docker run -p <port>:22 <image>` : pas de `--cap-add`, pas de
+   `--privileged`. Limites conseillées seulement pour l'hygiène de l'hôte :
+   `--pids-limit 512 --memory 512m --cpus 1`.
 
    Test manuel équivalent :
    ```bash
-   docker run -d -p 2222:22 --cap-add DAC_READ_SEARCH \
-     --pids-limit 512 --memory 512m \
+   docker run -d -p 2222:22 --pids-limit 512 --memory 512m \
      --name silent-ledger rootmeup/rt2-silent-ledger:1.0
    ```
 
@@ -75,7 +70,7 @@ Pour chacun, en plus du texte (voir `SCENARIO_JOUEUR.md`) :
 | 4 | Tâche planifiée | 125 | `RootMeUp{cr0n_j0bs_ar3_g0ld_9d17f3}` |
 | 5 | Délégation hasardeuse (sudo) | 150 | `RootMeUp{sud0_m1sc0nf1g_str1k3s_ag41n_e0a934}` |
 | 6 | Journaux confidentiels (SUID) | 175 | `RootMeUp{su1d_b1nar13s_l13_0ft3n_2f6b58}` |
-| 7 | Pouvoirs spéciaux | 200 | `RootMeUp{cap4bilit13s_ar3_p0w3r_5c2d71}` |
+| 7 | Le trousseau de l'agent | 200 | `RootMeUp{ag3nt_t0k3n_l00t3d_5c2d71}` |
 | 8 | L'orchestrateur | 225 | `RootMeUp{0rch3str4t0r_pwn3d_88af0d}` |
 | 9 | Le coffre | 250 | `RootMeUp{cr4ck3d_th3_v4ult_1e39b6}` |
 | 10 | Silent Ledger | 300 | `RootMeUp{0p3ration_s1l3nt_l3dg3r_c0mpl3t3_f4a217}` |
