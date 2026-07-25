@@ -98,6 +98,11 @@ Mesures appliquées conformément au benchmark CIS Debian :
 - `auditd` configuré (changements de mots de passe, modifications de fichiers sensibles)
 - `Fail2Ban` contre les tentatives de brute force
 
+## Supervision
+
+Le serveur CTFd est supervisé (métriques temps réel + alertes Discord) via une VM
+Grafana + Prometheus dédiée. Détail : **[`docs/SUPERVISION.md`](docs/SUPERVISION.md)**.
+
 ## Équipe projet
 
 | Membre | Rôle |
