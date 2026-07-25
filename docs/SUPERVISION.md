@@ -96,15 +96,31 @@ remplacer `${DS_PROMETHEUS}` par `prometheus`).
 
 ## Accès
 
-- **Grafana** : `http://100.84.158.83:3000` (via Tailscale). Changer le mot de passe admin par défaut.
-- **Prometheus** : `http://100.84.158.83:9090`.
+- **Grafana** : **`https://grafana.tail2f7520.ts.net`** (HTTPS via Tailscale, cert Let's Encrypt auto).
+- **Prometheus** : `http://100.84.158.83:9090` (tailnet).
 - Dashboard : *Dashboards → Node Exporter Full*, sélectionner le job `ctf-vm`.
+
+### HTTPS via Tailscale (`tailscale serve`)
+Grafana n'écoute qu'en local (`127.0.0.1:3000`) ; **Tailscale termine le TLS** sur `:443`
+et proxifie vers Grafana. Le certificat Let's Encrypt est provisionné et renouvelé
+automatiquement pour le nom MagicDNS. Prérequis : *HTTPS Certificates* activé dans la
+console admin Tailscale (`login.tailscale.com/admin/dns`).
+
+```bash
+# sur la VM Grafana
+tailscale serve --bg 3000          # https://<nom>.ts.net/ -> http://127.0.0.1:3000
+tailscale serve status             # vérifier le mapping
+# désactiver si besoin : tailscale serve --https=443 off
+```
+Côté Grafana (`/etc/grafana/grafana.ini`, section `[server]`) : `domain` et `root_url`
+pointent sur `https://grafana.tail2f7520.ts.net/` pour que les liens générés soient corrects.
 
 ## Sécurité
 
 - Le **webhook Discord** est un secret : il n'existe **que** dans
   `/etc/grafana/provisioning/alerting/discord.yaml` sur la VM Grafana, **jamais dans git**.
 - Grafana/Prometheus ne sont pas exposés sur Internet (accès uniquement via Tailscale).
+- **Grafana en HTTPS** (TLS terminé par Tailscale, cert Let's Encrypt) — plus de trafic en clair.
 - Changer les identifiants Grafana par défaut (`admin`/`admin`).
 
 ## Évolutions possibles
