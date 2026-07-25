@@ -9,7 +9,7 @@ comment sont gérés les flags, et la convention de branches à respecter.
 |---|---|
 | Serveur | VM `ctf-rootmeup` (Debian 13), accès **Tailscale** + SSH |
 | Dépôt sur la VM | `/srv/ctf-challenges/RootMeUp` (propriétaire `ctfd` → utiliser `sudo git -C …`) |
-| CTFd | venv Python + gunicorn sur `127.0.0.1:8000`, exposé par **Apache** sur `http://100.118.132.76/` (tailnet) |
+| CTFd | venv Python + gunicorn sur `127.0.0.1:8000`, exposé par **Apache** puis en **HTTPS via Tailscale** sur `https://ctf-rootmeup.tail8588a8.ts.net/` (cert Let's Encrypt) |
 | Base CTFd | MySQL/MariaDB local (`ctfd`) |
 | Instanciation | plugin **CTFdDockerContainersPlugin** : 1 conteneur par équipe/challenge |
 | Images | nommées `rootmeup/<code>:1.0` |
@@ -75,7 +75,7 @@ se fait **une fois** par challenge/serveur (et à chaque changement de code ou d
 
 ## 5. Câbler un challenge dans CTFd (plugin containers)
 
-1. `http://100.118.132.76/` → login admin → **Admin Panel → Challenges → Create**.
+1. `https://ctf-rootmeup.tail8588a8.ts.net/` → login admin → **Admin Panel → Challenges → Create**.
 2. Choisir le type **Container** (fourni par le plugin).
 3. Renseigner :
    - **Image** : `rootmeup/<code>:1.0`
