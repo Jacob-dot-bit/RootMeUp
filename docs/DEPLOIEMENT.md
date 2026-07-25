@@ -94,6 +94,7 @@ se fait **une fois** par challenge/serveur (et à chaque changement de code ou d
 | `2-Red-Team-Operation-Silent-Ledger-Lucas` | `rootmeup/rt2-silent-ledger:1.0` | (voir Dockerfile) | SSH / service |
 | `3-Red-Team-Nexus-Cipher-Sarah` | `rootmeup/rt3-ciphers-nexus:1.0` | (voir Dockerfile) | HTTP (API) |
 | `3-Blue-Team-Hardening-Lucas` | *(image à confirmer)* | (voir Dockerfile) | — |
+| `4-Red-Team-breach-and-ascend` | *(image à confirmer)* | `80` | HTTP (web → root) |
 
 > Les ports marqués « voir Dockerfile » sont à confirmer via l'instruction `EXPOSE`
 > du Dockerfile de chaque challenge.
