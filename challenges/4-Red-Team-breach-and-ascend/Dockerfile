@@ -22,6 +22,8 @@ RUN apt-get update \
 # pour que le .htaccess de uploads/ (exécution des .phtml/.php5/.phar)
 # soit bien pris en compte. Le listing reste désactivé par défaut.
 RUN printf '%s\n' \
+    'ServerName localhost' \
+    'DirectoryIndex index.php index.html' \
     '<Directory /var/www/html>' \
     '    Options -Indexes +FollowSymLinks' \
     '    AllowOverride All' \
@@ -35,7 +37,9 @@ COPY web/ /var/www/html/
 
 # Le dossier de dépôt doit être inscriptible par Apache (www-data),
 # sans recourir à un chmod 777 : www-data comme propriétaire suffit.
-RUN chown -R root:root /var/www/html \
+# On supprime aussi la page par défaut de Debian pour que "/" serve index.php.
+RUN rm -f /var/www/html/index.html \
+    && chown -R root:root /var/www/html \
     && chown -R www-data:www-data /var/www/html/uploads \
     && chmod 755 /var/www/html/uploads
 
