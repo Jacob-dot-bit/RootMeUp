@@ -41,8 +41,8 @@ pass: Welcome2024!
 | 2 | Fouille de printemps                          | Énumération du système de fichiers                    |     75 |
 | 3 | Mauvaise mémoire                              | Récolte d'identifiants (historique shell)             |    100 |
 | 4 | Tâche planifiée                               | Privesc via cron job inscriptible                     |    125 |
-| 5 | Journaux confidentiels                        | Binaire SUID vulnérable (injection de commande)       |    150 |
-| 6 | Délégation hasardeuse                         | Mauvaise configuration sudo (GTFOBins)                 |    175 |
+| 5 | Délégation hasardeuse                         | Mauvaise configuration sudo (GTFOBins)                 |    150 |
+| 6 | Journaux confidentiels                        | Binaire SUID vulnérable (injection de commande)       |    175 |
 | 7 | Pouvoirs spéciaux                             | Abus de capabilities Linux                             |    200 |
 | 8 | L'orchestrateur                               | Désérialisation non sécurisée (RCE root)              |    225 |
 | 9 | Le coffre                                     | Cassage de mot de passe hors-ligne (zip)               |    250 |
@@ -59,7 +59,7 @@ pass: Welcome2024!
 >
 > `ssh j.martin@<host> -p <port>` — mot de passe : `Welcome2024!`
 >
-> Format du flag : `MERIDIAN{...}`
+> Format du flag : `RootMeUp{...}`
 
 ### 2 — Fouille de printemps (75 pts)
 > Les sauvegardes système sont rarement bien nettoyées. Un peu de méthode
@@ -73,13 +73,13 @@ pass: Welcome2024!
 > Un compte de service tourne toutes les nuits (enfin, toutes les minutes ici, pour
 > ne pas vous faire attendre). Qui exécute quoi, et avec quelles permissions ?
 
-### 5 — Journaux confidentiels (150 pts)
-> L'équipe IT a développé un petit outil interne pour consulter les logs sans
-> donner un accès root complet aux analystes. Est-il aussi sûr qu'il en a l'air ?
+### 5 — Délégation hasardeuse (150 pts)
+> Ce compte dispose de quelques privilèges `sudo` très ciblés. Trop ciblés,
+> peut-être pas assez. (`sudo -l`, puis GTFOBins.)
 
-### 6 — Délégation hasardeuse (175 pts)
-> Un analyste dispose de quelques privilèges `sudo` très ciblés. Trop ciblés,
-> peut-être pas assez.
+### 6 — Journaux confidentiels (175 pts)
+> L'équipe IT a développé un petit outil interne pour consulter les logs sans
+> donner un accès complet. Est-il aussi sûr qu'il en a l'air ?
 
 ### 7 — Pouvoirs spéciaux (200 pts)
 > Root n'est pas le seul moyen de contourner les permissions du système de
@@ -105,9 +105,9 @@ Pour un public de M2, je recommande de **ne pas** activer d'indices payants sur 
 challenges 1 à 4 (trop simple), mais d'en prévoir un discret (coût 10-15% des points)
 sur 5, 6, 7, 8 et 9, du type :
 
-- F5 : "Cherchez les binaires SUID sur le système, puis étudiez ce qu'ils exécutent
+- F5 : "`sudo -l` est votre ami. GTFOBins aussi."
+- F6 : "Cherchez les binaires SUID sur le système, puis étudiez ce qu'ils exécutent
   en interne (`strings`, `ltrace`)."
-- F6 : "`sudo -l` est votre ami. GTFOBins aussi."
 - F7 : "`getcap -r / 2>/dev/null` révèle des choses intéressantes."
 - F8 : "Le protocole de l'orchestrateur accepte un token. Un des fichiers déjà
   récupérés en contient un."

@@ -7,4 +7,4 @@ IT onboarding checklist:
 
 Ticket MER-2291: "please stop leaving debug notes in your home dir" - IT
 
-flag: MERIDIAN{f1rst_st3ps_1nt0_th3_n3tw0rk_3a1c9d}
+flag: RootMeUp{f1rst_st3ps_1nt0_th3_n3tw0rk_3a1c9d}

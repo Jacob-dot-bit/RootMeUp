@@ -1,4 +1,6 @@
-flag: MERIDIAN{su1d_b1nar13s_l13_0ft3n_2f6b58}
+Pivot vers app_agent reussi via une regle sudo trop permissive (GTFOBins).
 
-logviewer runs as root and builds a shell command from your input without
-sanitizing it. Command injection in a SUID binary is still command injection.
+flag: RootMeUp{sud0_m1sc0nf1g_str1k3s_ag41n_e0a934}
+
+Indice suivant : tous les binaires privilegies ne sont pas dans /usr/bin.
+Cherche un SUID que ton groupe peut executer :  find / -perm -4000 2>/dev/null

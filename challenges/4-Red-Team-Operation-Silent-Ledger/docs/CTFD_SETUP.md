@@ -31,6 +31,21 @@ Dans l'admin CTFd → onglet du plugin Docker :
 3. Vérifiez que le réseau Docker utilisé pour ces instances **n'a pas d'accès
    sortant à Internet** (bridge isolé / `--internal`). Rien dans ce challenge n'en
    a besoin, et ça évite qu'une instance compromise serve de relais.
+4. ⚠️ **CAPABILITY REQUISE — `--cap-add DAC_READ_SEARCH`.** Le flag 7 repose sur
+   la capability `cap_dac_read_search`, qui **ne fait pas partie** des
+   capabilities Docker par défaut : sans elle, `py-agent` ne peut rien lire et le
+   flag 7 devient impossible. Configurez le plugin pour lancer les instances de
+   cette image avec `--cap-add DAC_READ_SEARCH` (champ « extra flags » / options
+   du plugin selon la version). N'ajoutez **rien d'autre** (surtout pas
+   `--privileged` ni `--cap-add DAC_OVERRIDE`, qui casseraient l'isolation).
+   Limites conseillées : `--pids-limit 512 --memory 512m --cpus 1`.
+
+   Test manuel équivalent :
+   ```bash
+   docker run -d -p 2222:22 --cap-add DAC_READ_SEARCH \
+     --pids-limit 512 --memory 512m \
+     --name silent-ledger rootmeup/rt2-silent-ledger:1.0
+   ```
 
 ## 3. Création des challenges (10 + 1 point d'entrée)
 
@@ -43,7 +58,7 @@ Créez une catégorie unique, par exemple `Red Team — Silent Ledger`.
 - Port exposé : `22/tcp`
 - Description : voir `SCENARIO_JOUEUR.md` section 1
 - Points : 50 (dynamique ou statique selon votre préférence — voir §5)
-- Flag : `MERIDIAN{f1rst_st3ps_1nt0_th3_n3tw0rk_3a1c9d}`
+- Flag : `RootMeUp{f1rst_st3ps_1nt0_th3_n3tw0rk_3a1c9d}`
 
 C'est le **seul** challenge avec un bouton "Start Instance". Les 9 suivants sont
 des challenges **standards** (flag texte) : le joueur reste sur l'instance déjà
@@ -55,18 +70,18 @@ Pour chacun, en plus du texte (voir `SCENARIO_JOUEUR.md`) :
 
 | # | Nom             | Points | Flag                                                        |
 |---|------------------|-------:|--------------------------------------------------------------|
-| 2 | Fouille de printemps | 75 | `MERIDIAN{h1dd3n_1n_pla1n_s1ght_7b2e41}` |
-| 3 | Mauvaise mémoire | 100 | `MERIDIAN{h1st0ry_r3p3ats_1ts3lf_c48a02}` |
-| 4 | Tâche planifiée | 125 | `MERIDIAN{cr0n_j0bs_ar3_g0ld_9d17f3}` |
-| 5 | Journaux confidentiels | 150 | `MERIDIAN{su1d_b1nar13s_l13_0ft3n_2f6b58}` |
-| 6 | Délégation hasardeuse | 175 | `MERIDIAN{sud0_m1sc0nf1g_str1k3s_ag41n_e0a934}` |
-| 7 | Pouvoirs spéciaux | 200 | `MERIDIAN{cap4bilit13s_ar3_p0w3r_5c2d71}` |
-| 8 | L'orchestrateur | 225 | `MERIDIAN{0rch3str4t0r_pwn3d_88af0d}` |
-| 9 | Le coffre | 250 | `MERIDIAN{cr4ck3d_th3_v4ult_1e39b6}` |
-| 10 | Silent Ledger | 300 | `MERIDIAN{0p3ration_s1l3nt_l3dg3r_c0mpl3t3_f4a217}` |
+| 2 | Fouille de printemps | 75 | `RootMeUp{h1dd3n_1n_pla1n_s1ght_7b2e41}` |
+| 3 | Mauvaise mémoire | 100 | `RootMeUp{h1st0ry_r3p3ats_1ts3lf_c48a02}` |
+| 4 | Tâche planifiée | 125 | `RootMeUp{cr0n_j0bs_ar3_g0ld_9d17f3}` |
+| 5 | Délégation hasardeuse (sudo) | 150 | `RootMeUp{sud0_m1sc0nf1g_str1k3s_ag41n_e0a934}` |
+| 6 | Journaux confidentiels (SUID) | 175 | `RootMeUp{su1d_b1nar13s_l13_0ft3n_2f6b58}` |
+| 7 | Pouvoirs spéciaux | 200 | `RootMeUp{cap4bilit13s_ar3_p0w3r_5c2d71}` |
+| 8 | L'orchestrateur | 225 | `RootMeUp{0rch3str4t0r_pwn3d_88af0d}` |
+| 9 | Le coffre | 250 | `RootMeUp{cr4ck3d_th3_v4ult_1e39b6}` |
+| 10 | Silent Ledger | 300 | `RootMeUp{0p3ration_s1l3nt_l3dg3r_c0mpl3t3_f4a217}` |
 
-> Vérifiez le flag exact de F5 dans `challenge/flag5.txt` après build — pensez à le
-> recopier ici. (Il est reproduit dans `SOLUTION_WRITEUP.md`.)
+> Récap complet dans `ctfd/flags.txt` ; textes prêts à coller dans
+> `ctfd/CTFd_a_copier.md`.
 
 ## 4. Forcer l'ordre chronologique avec les prérequis CTFd
 
