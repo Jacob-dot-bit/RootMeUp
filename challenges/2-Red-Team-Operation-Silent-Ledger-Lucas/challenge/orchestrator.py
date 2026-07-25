@@ -21,10 +21,9 @@ TOKEN_FILE = "/root/.orchestrator_token"
 #
 # It is loaded from a root-owned file at startup, and that file is deleted
 # immediately afterwards. This means the flag cannot be obtained by any
-# arbitrary-file-read primitive (e.g. the cap_dac_read_search binary of flag 7,
-# which bypasses DAC read checks but cannot read another process's heap): the
-# ONLY way to recover it is to achieve code execution *inside* this process,
-# i.e. by actually exploiting the insecure-deserialization vulnerability below.
+# file-read access (even as root, the file no longer exists on disk): the ONLY
+# way to recover it is to achieve code execution *inside* this process, i.e. by
+# actually exploiting the insecure-deserialization vulnerability below.
 # ---------------------------------------------------------------------------
 FLAG8 = "MISSING"
 

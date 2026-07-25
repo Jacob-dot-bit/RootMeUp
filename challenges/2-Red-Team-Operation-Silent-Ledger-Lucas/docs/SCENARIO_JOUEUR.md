@@ -43,7 +43,7 @@ pass: Welcome2024!
 | 4 | Tâche planifiée                               | Privesc via cron job inscriptible                     |    125 |
 | 5 | Délégation hasardeuse                         | Mauvaise configuration sudo (GTFOBins)                 |    150 |
 | 6 | Journaux confidentiels                        | Binaire SUID vulnérable (injection de commande)       |    175 |
-| 7 | Pouvoirs spéciaux                             | Abus de capabilities Linux                             |    200 |
+| 7 | Le trousseau de l'agent                       | Loot post-compromission (secrets en clair)            |    200 |
 | 8 | L'orchestrateur                               | Désérialisation non sécurisée (RCE root)              |    225 |
 | 9 | Le coffre                                     | Cassage de mot de passe hors-ligne (zip)               |    250 |
 | 10| Silent Ledger                                 | Cassage de PIN + déchiffrement GPG (final)             |    300 |
@@ -81,9 +81,9 @@ pass: Welcome2024!
 > L'équipe IT a développé un petit outil interne pour consulter les logs sans
 > donner un accès complet. Est-il aussi sûr qu'il en a l'air ?
 
-### 7 — Pouvoirs spéciaux (200 pts)
-> Root n'est pas le seul moyen de contourner les permissions du système de
-> fichiers sous Linux.
+### 7 — Le trousseau de l'agent (200 pts)
+> Vous contrôlez le compte de service de l'agent de flotte. Les agents stockent
+> souvent leurs identifiants en clair — pillez sa configuration locale.
 
 ### 8 — L'orchestrateur (225 pts)
 > Meridian gère sa flotte de serveurs avec un outil interne maison. Les outils
@@ -108,7 +108,7 @@ sur 5, 6, 7, 8 et 9, du type :
 - F5 : "`sudo -l` est votre ami. GTFOBins aussi."
 - F6 : "Cherchez les binaires SUID sur le système, puis étudiez ce qu'ils exécutent
   en interne (`strings`, `ltrace`)."
-- F7 : "`getcap -r / 2>/dev/null` révèle des choses intéressantes."
+- F7 : "Tu contrôles le compte de l'agent. Fouille son home et sa config locale (`~/.fleet-agent`) : les identifiants y sont souvent en clair."
 - F8 : "Le protocole de l'orchestrateur accepte un token. Un des fichiers déjà
   récupérés en contient un."
 - F9 : "`zip2john` + une wordlist connue suffisent."
