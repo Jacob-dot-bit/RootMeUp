@@ -33,7 +33,9 @@ RUN LICENSE="$LICENSE" FLAG1="$FLAG1" FLAG2="$FLAG2" XOR_KEY="$XOR_KEY" \
     rm -rf /build
 
 COPY docker-entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# 0755 (et pas `chmod +x` seul) : le conteneur tourne en USER ctf ; un script #!/bin/sh
+# doit être LISIBLE par l'utilisateur qui l'exécute, sinon "Permission denied" au démarrage.
+RUN chmod 0755 /usr/local/bin/entrypoint.sh
 
 WORKDIR /challenge
 EXPOSE 9003
