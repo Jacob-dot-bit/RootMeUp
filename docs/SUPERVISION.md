@@ -25,11 +25,14 @@ flowchart LR
         pnode["node_exporter :9100<br/>(CPU / RAM / disque hyperviseur)"]
     end
 
-    discord["🔔 Discord<br/>(webhook — secret)"]
+    discord["🔔 Discord<br/>(webhooks — secrets)"]
+    hc["☠️ healthchecks.io<br/>(dead man's switch, externe)"]
 
     prometheus -->|scrape| node
     prometheus -->|scrape interne| pnode
     grafana -->|alertes| discord
+    grafana_vm -.->|heartbeat /2 min| hc
+    hc -.->|si le battement s'arrête| discord
 ```
 
 - **node_exporter** (sur la VM CTF **et** sur l'hôte Proxmox) : expose CPU / RAM / disque / réseau.
@@ -121,6 +124,24 @@ remplacer `${DS_PROMETHEUS}` par `prometheus`).
 | Hôte Proxmox injoignable | `up{job="proxmox-host"} == 0` pendant 1 min | critique |
 | Disque presque plein (Proxmox) | filesystem `ext4/xfs/zfs` de l'hyperviseur (dont `/var/lib/vz`) > 85 % pendant 5 min | critique |
 | RAM haute (Proxmox) | mémoire utilisée de l'hyperviseur > 90 % pendant 5 min | warning |
+
+### 6. Détection de la panne totale (dead man's switch)
+
+⚠️ **Angle mort** : Grafana/Prometheus tournent dans une VM **hébergée sur le Proxmox**.
+Si l'hôte tombe **totalement** (crash, coupure de courant, reboot), la VM Grafana meurt
+avec lui → le moteur d'alerte est mort et ne peut PAS envoyer d'alerte. Une supervision
+ne peut pas signaler sa propre mort.
+
+**Parade** : un *dead man's switch* **externe** via [healthchecks.io](https://healthchecks.io).
+La VM Grafana envoie un **battement** (ping HTTP) toutes les 2 min ; si les battements
+s'arrêtent (donc si l'hôte est tombé), healthchecks.io déclenche une alerte **Discord + email**
+après `period + grace` (≈ 10 min).
+
+- Côté VM Grafana : timer systemd `hc-heartbeat.timer` (+ `.service`) →
+  `curl https://hc-ping.com/<uuid>` toutes les 2 min. **L'URL de ping est un secret**
+  (uniquement dans l'unité systemd, `chmod 600`, jamais dans git).
+- Côté healthchecks.io : check *Proxmox RootMeUp*, **Period 5 min / Grace 5 min**,
+  intégrations **Discord + email**.
 
 ## Accès
 
