@@ -7,7 +7,7 @@ flowchart LR
     subgraph tailnet["Réseau privé Tailscale"]
         direction TB
         subgraph vm["VM Debian durcie (CIS)"]
-            apache["HTTPS (Tailscale, Let's Encrypt)<br/>+ Apache reverse-proxy"]
+            apache["Apache :443 (HTTPS)<br/>cert Let's Encrypt (tailscale cert)"]
             ctfd["CTFd<br/>(systemd, gunicorn :8000)"]
             plugin["CTFdDockerContainersPlugin"]
             docker["Docker + containerd"]
@@ -22,7 +22,7 @@ flowchart LR
 
 ## Composants
 
-- **CTFd** : interface web pour les joueurs, gestion des équipes, scores et flags. Service systemd (gunicorn en local sur `127.0.0.1:8000`), exposé en HTTPS via Tailscale.
+- **CTFd** : interface web pour les joueurs, gestion des équipes, scores et flags. Service systemd (gunicorn en local sur `127.0.0.1:8000`) ; Apache termine le TLS sur `:443` (cert Let's Encrypt via `tailscale cert`), accessible uniquement sur le tailnet.
 - **containerd** : runtime de conteneurs, exécute les instances de challenges et fait le lien avec CTFd.
 - **Docker** : utilisé pour construire et stocker les images des challenges.
 - **CTFdDockerContainersPlugin** : plugin CTFd qui déclenche via containerd la création d'une instance isolée par équipe lors du lancement d'un challenge.
@@ -37,7 +37,7 @@ Une seule VM Debian, durcie selon le benchmark CIS, héberge l'ensemble des serv
 
 ## Flux réseau
 
-- **Joueurs → CTFd** (HTTPS via Tailscale, `https://ctf-rootmeup.tail8588a8.ts.net/`) : authentification, consultation des challenges, soumission des flags. En interne, Apache proxifie vers gunicorn (`127.0.0.1:8000`).
+- **Joueurs → CTFd** (`https://ctf-rootmeup.tail8588a8.ts.net/`, sur le tailnet) : authentification, consultation des challenges, soumission des flags. Apache termine le TLS sur `:443` et proxifie vers gunicorn (`127.0.0.1:8000`).
 - **CTFd → containerd** : le plugin crée une instance Docker par équipe à la demande.
 - **Joueurs → instance du challenge** : connexion directe au port exposé par le conteneur.
 - **Administrateurs → VM** : accès SSH par clé via Tailscale.

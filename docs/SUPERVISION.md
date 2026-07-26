@@ -146,7 +146,8 @@ après `period + grace` (≈ 10 min).
 ## Accès
 
 - **Grafana** : **`https://grafana.tail2f7520.ts.net`** (HTTPS via Tailscale, cert Let's Encrypt auto).
-- **Prometheus** : `http://100.84.158.83:9090` (tailnet).
+- **Prometheus** : écoute en **local uniquement** (`127.0.0.1:9090`) sur la VM Grafana — non exposé
+  sur le tailnet (interrogeable via un tunnel SSH ou depuis la VM). C'est Grafana qui l'expose via ses dashboards.
 - Dashboard : *Dashboards → Node Exporter Full*, sélectionner le job `ctf-vm`.
 
 ### HTTPS via Tailscale (`tailscale serve`)

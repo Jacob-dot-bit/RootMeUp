@@ -53,7 +53,7 @@ flowchart LR
     subgraph tailnet["Réseau privé Tailscale"]
         direction TB
         subgraph vm["VM Debian durcie (CIS)"]
-            apache["HTTPS (Tailscale, Let's Encrypt)<br/>+ Apache reverse-proxy"]
+            apache["Apache :443 (HTTPS)<br/>cert Let's Encrypt (tailscale cert)"]
             ctfd["CTFd<br/>(systemd, gunicorn :8000)"]
             plugin["CTFdDockerContainersPlugin"]
             docker["Docker + containerd"]
@@ -67,7 +67,7 @@ flowchart LR
 ```
 
 Le serveur est une VM Debian durcie selon le benchmark CIS, qui héberge :
-- **CTFd** : service systemd (gunicorn en local sur `127.0.0.1:8000`), exposé aux joueurs par **Apache** puis en **HTTPS via Tailscale** (`https://ctf-rootmeup.tail8588a8.ts.net/`, cert Let's Encrypt)
+- **CTFd** : service systemd (gunicorn en local sur `127.0.0.1:8000`) ; **Apache** fait reverse-proxy et **termine le TLS sur `:443`** avec un **certificat Let's Encrypt** (obtenu via `tailscale cert` pour le nom MagicDNS) → `https://ctf-rootmeup.tail8588a8.ts.net/`
 - **Docker** : utilisé pour construire et stocker les images des challenges
 - **containerd** : runtime de conteneurs qui exécute effectivement les instances de challenges ; sert de lien entre CTFd et les conteneurs lancés
 - **CTFdDockerContainersPlugin** : plugin CTFd qui déclenche via containerd la création d'une instance par équipe lors du lancement d'un challenge
@@ -165,9 +165,9 @@ Bonnes pratiques appliquées au dépôt et à la plateforme :
   joueurs n'ont accès qu'au dépôt [RootMeUp-CTF](https://github.com/Jacob-dot-bit/RootMeUp-CTF)
   (guides sans réponses).
 - **Isolation** — un conteneur par équipe et par challenge, réseau dédié.
-- **Pas d'exposition Internet** — l'accès passe uniquement par **Tailscale**, et
-  **CTFd comme Grafana sont servis en HTTPS** (certificats Let's Encrypt, TLS terminé
-  par Tailscale — cf. [`docs/SUPERVISION.md`](docs/SUPERVISION.md)).
+- **Pas d'exposition Internet** — l'accès passe uniquement par **Tailscale**. **CTFd** et
+  **Grafana** sont servis en **HTTPS** (certificats Let's Encrypt via Tailscale) : TLS terminé
+  par **Apache** pour CTFd, par **`tailscale serve`** pour Grafana (cf. [`docs/SUPERVISION.md`](docs/SUPERVISION.md)).
 
 ## Durcissement du serveur
 
