@@ -1,4 +1,0 @@
-
-# Analysts occasionally need to run cleanup/search jobs as the
-# app_agent service account without bothering IT every time.
-r.dubois ALL=(app_agent) NOPASSWD: /usr/bin/find

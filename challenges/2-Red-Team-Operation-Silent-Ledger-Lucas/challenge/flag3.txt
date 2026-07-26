@@ -1,7 +1,0 @@
-Compte svc_backup - service de rotation des sauvegardes nocturnes.
-
-flag: RootMeUp{h1st0ry_r3p3ats_1ts3lf_c48a02}
-
-Note perso : le script /opt/scripts/cleanup.sh est modifiable par le groupe
-svc_backup, et la tache planifiee qui l'execute ne tourne PAS en root...
-a quel compte appartient ce job, deja ?

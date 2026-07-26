@@ -1,5 +1,0 @@
-flag: RootMeUp{0rch3str4t0r_pwn3d_88af0d}
-
-RCE en root via la deserialisation non securisee (pickle.loads) de
-l'orchestrateur. Ce flag ne vit qu'EN MEMOIRE du process : seule l'execution de
-code a l'interieur de l'orchestrateur permet de le lire (pas la capability F7).

@@ -1,3 +1,0 @@
--- legacy schema export, table structure only, no rows (decommissioned 2018)
-CREATE TABLE legacy_customers (id INT, name VARCHAR(255), created_at DATETIME);
-CREATE TABLE legacy_invoices (id INT, customer_id INT, amount DECIMAL(10,2));
