@@ -42,7 +42,8 @@ RUN pip3 install --no-cache-dir --break-system-packages pwntools
 # Configuration SSH (mot de passe, pas de root)
 RUN mkdir -p /run/sshd && ssh-keygen -A && \
     sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config && \
-    sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+    sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
+    sed -i 's/^#\?PrintMotd.*/PrintMotd yes/' /etc/ssh/sshd_config
 
 # 'vault' = utilisateur de service (possède les flags, exécute le binaire).
 # 'hacker' = compte du joueur (mot de passe : vault9).
@@ -63,7 +64,7 @@ RUN chown root:root /challenge/vault && chmod 0555 /challenge/vault && \
 
 COPY mission.txt /etc/motd
 COPY docker-entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod 0755 /usr/local/bin/entrypoint.sh
+RUN chmod 0755 /usr/local/bin/entrypoint.sh && chmod 0644 /etc/motd
 
 EXPOSE 22
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
