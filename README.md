@@ -132,6 +132,9 @@ Numérotation par équipe (`N-Blue-Team-*` / `N-Red-Team-*`).
 
 > 📖 **Procédure complète de déploiement** (build, flags/rotation via `challenge.env`,
 > câblage CTFd, convention de branches) : voir **[`docs/DEPLOIEMENT.md`](docs/DEPLOIEMENT.md)**.
+>
+> 🐞 **Bugs rencontrés & corrections** (retour d'expérience technique) :
+> voir **[`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md)**.
 
 Construire l'image Docker localement, l'exporter et la transférer sur le serveur :
 
