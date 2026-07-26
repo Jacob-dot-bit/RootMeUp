@@ -7,8 +7,7 @@ Documenter ce que doit contenir le commit initial open source (projet d'école),
 - README.md
 - LICENSE (MIT)
 - docs/
-  - architecture.md
-  - diagram.png (schéma)
+  - architecture.md (schéma en Mermaid)
   - commit-plan.md (ce fichier)
 - .gitignore (à ajouter pour exclure .env, fichiers temporaires)
 - .env.example (optionnel, sans secrets)
