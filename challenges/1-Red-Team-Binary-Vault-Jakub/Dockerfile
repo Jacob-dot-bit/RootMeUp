@@ -43,7 +43,9 @@ RUN pip3 install --no-cache-dir --break-system-packages pwntools
 RUN mkdir -p /run/sshd && ssh-keygen -A && \
     sed -i 's/^#\?PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config && \
     sed -i 's/^#\?PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
-    sed -i 's/^#\?PrintMotd.*/PrintMotd yes/' /etc/ssh/sshd_config
+    sed -i 's/^#\?PrintMotd.*/PrintMotd no/' /etc/ssh/sshd_config
+# NB : /etc/motd est affiché UNE fois par pam_motd (PAM) ; garder PrintMotd=no
+# évite le double affichage.
 
 # 'vault' = utilisateur de service (possède les flags, exécute le binaire).
 # 'hacker' = compte du joueur (mot de passe : vault9).
