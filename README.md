@@ -47,23 +47,130 @@ Le projet a connu deux phases :
 ## Architecture
 
 ```mermaid
-flowchart LR
-    joueur["👤 Joueur<br/>(navigateur / SSH / nc)"]
+flowchart TB
 
-    subgraph tailnet["Réseau privé Tailscale"]
-        direction TB
-        subgraph vm["VM Debian durcie (CIS)"]
-            apache["Apache :443 (HTTPS)<br/>cert Let's Encrypt (tailscale cert)"]
-            ctfd["CTFd<br/>(systemd, gunicorn :8000)"]
-            plugin["CTFdDockerContainersPlugin"]
-            docker["Docker + containerd"]
-            inst["Instances de challenges<br/>(1 conteneur / équipe)"]
-        end
-    end
+%% =====================
+%% Clients
+%% =====================
 
-    joueur -->|HTTPS| apache --> ctfd --> plugin
-    plugin -->|pilote| docker --> inst
-    joueur -.->|accès direct à l'instance<br/>port dynamique| inst
+Users["Postes des équipes<br/>Client Tailscale installé"]
+
+TS["VPN Tailscale<br/>(WireGuard chiffré)<br/><br/>SSH :22<br/>CTFd HTTPS :443<br/>Grafana HTTPS :443"]
+
+Users --> TS
+
+%% =====================
+%% Hyperviseur
+%% =====================
+
+subgraph PROXMOX["Proxmox VE"]
+
+%% ------------------------------------------------------------------
+%% VM 1
+%% ------------------------------------------------------------------
+
+subgraph VM1["VM 1 — CTFd (Debian 13 CIS)"]
+
+direction TB
+
+subgraph FRONT["Front"]
+NGINX["Nginx<br/>Reverse Proxy<br/>HTTPS (certificat Tailscale)"]
+end
+
+subgraph BACK["Application"]
+CTFD["CTFd<br/>systemd + Gunicorn<br/>127.0.0.1:8000"]
+end
+
+subgraph DATA["Base de données"]
+DB["MariaDB<br/>3306"]
+REDIS["Redis<br/>6379"]
+end
+
+subgraph DOCKER["Infrastructure Docker"]
+DOCKERD["Docker"]
+
+CHALL["8 images de challenges<br/>4 Blue Team<br/>4 Red Team"]
+
+A["Equipe A<br/>32771 → 8080"]
+B["Equipe B<br/>41235 → 5601"]
+C["..."]
+
+DOCKERD --> CHALL
+CHALL --> A
+CHALL --> B
+CHALL --> C
+
+end
+
+subgraph EXPORT["Supervision"]
+
+NODE["node_exporter<br/>CPU • RAM • Disque • Réseau"]
+
+CAD["cAdvisor<br/>Statistiques Docker"]
+
+end
+
+NGINX --> CTFD
+
+CTFD --> DB
+CTFD --> REDIS
+
+CTFD -. Plugin Bigyls .-> DOCKERD
+
+end
+
+%% ------------------------------------------------------------------
+%% VM2
+%% ------------------------------------------------------------------
+
+subgraph VM2["VM 2 — Supervision (Debian 13)"]
+
+direction TB
+
+subgraph GRAF["Accès Grafana"]
+
+GRAFNG["Nginx<br/>Reverse Proxy<br/>HTTPS (certificat Tailscale)"]
+
+GRAFANA["Grafana"]
+
+end
+
+PROM["Prometheus"]
+
+ALERT["Alertmanager"]
+
+GRAFNG --> GRAFANA
+
+PROM --> GRAFANA
+
+PROM --> ALERT
+
+end
+
+end
+
+%% =====================
+%% Réseau Tailscale
+%% =====================
+
+TS --> NGINX
+TS --> GRAFNG
+
+%% =====================
+%% Supervision
+%% =====================
+
+PROM -. scrape :9100 .-> NODE
+
+PROM -. scrape :8080 .-> CAD
+
+%% =====================
+%% Alertes
+%% =====================
+
+DISCORD["Discord équipe<br/>(Webhook)"]
+
+ALERT --> DISCORD
 ```
 
 Le serveur est une VM Debian durcie selon le benchmark CIS, qui héberge :
@@ -126,8 +233,8 @@ Numérotation par équipe (`N-Blue-Team-*` / `N-Red-Team-*`).
 | Red 2 | `challenges/2-Red-Team-Operation-Silent-Ledger-Lucas` | Opération Silent Ledger — machine Linux compromise (SSH → escalade → GPG) | Red Team | Intégré |
 | Blue 3 | `challenges/3-Blue-Team-Hardening-Lucas` | Hardening / durcissement système | Blue Team | Intégré |
 | Red 3 | `challenges/3-Red-Team-Nexus-Cipher-Sarah` | Cipher — pentest du portail API Nexus (crypto/web, 10 flags) | Red Team | Intégré |
-| Red 4 | `challenges/4-Red-Team-breach-and-ascend` | Breach & Ascend — intrusion web (upload) puis élévation → root | Red Team | En cours |
-| Blue 4 | _à venir_ | — | — | À faire |
+| Red 4 | `challenges/4-Red-Team-breach-and-ascend` | Breach & Ascend — intrusion web (upload) puis élévation → root | Red Team | Intégré |
+| Blue 4 | `challenges/4-Blue-Team-Helios-Incident` | Incident sur Helios corp - analyse capture réseau | Blue Team | Intégré |
 
 ## Ajout d'un challenge sur le serveur
 
@@ -157,10 +264,6 @@ Puis créer le challenge dans CTFd (`Admin Panel > Challenges > Create Challenge
 
 Bonnes pratiques appliquées au dépôt et à la plateforme :
 
-- **Aucun secret dans le dépôt** — bien que public (pour le jury), les **vrais flags n'y
-  figurent pas** : ils sont lus au build depuis un fichier `setup/challenge.env` **gitignoré**
-  et **rotés** par rapport à toute valeur ayant pu être exposée (voir
-  [`docs/DEPLOIEMENT.md`](docs/DEPLOIEMENT.md)).
 - **Séparation des publics** — les solutions/exploits restent dans ce dépôt technique ; les
   joueurs n'ont accès qu'au dépôt [RootMeUp-CTF](https://github.com/Jacob-dot-bit/RootMeUp-CTF)
   (guides sans réponses).
@@ -172,6 +275,8 @@ Bonnes pratiques appliquées au dépôt et à la plateforme :
 ## Durcissement du serveur
 
 Mesures appliquées conformément au benchmark CIS Debian :
+- Partitionnement clair des filesystem sur les serveurs
+- Désactivation des modules et services inutiles
 - Accès SSH par clé uniquement, connexion root interdite
 - Pare-feu `iptables` filtrant les flux entrants/sortants
 - Mises à jour automatiques (`unattended-upgrades`)
@@ -203,8 +308,8 @@ Grafana + Prometheus dédiée. Détail : **[`docs/SUPERVISION.md`](docs/SUPERVIS
 |--------|------|
 | Jakub | Chef de projet |
 | Sarah | Architecte cybersécurité |
-| Evan | Développeur cybersécurité |
-| Lucas | Développeur et concepteur de challenges |
+| Evan | Développeur de challenges |
+| Lucas | Développeur de challenges et administrateur CTFd |
 
 ## Liens utiles
 
