@@ -105,9 +105,13 @@ Dashboard **« Node Exporter Full » (ID 1860)** provisionné dans
 remplacer `${DS_PROMETHEUS}` par `prometheus`).
 
 ### 5. Alerting Discord
-- **Point de contact** `Discord` + politique par défaut →
-  `/etc/grafana/provisioning/alerting/discord.yaml` (contient le webhook — **jamais committé**).
-- **Règles** (`/etc/grafana/provisioning/alerting/rules.yaml`), toutes routées vers Discord :
+- **Deux points de contact** dans `/etc/grafana/provisioning/alerting/discord.yaml`
+  (chacun avec son webhook — **secrets, jamais committés**) :
+  - `Discord` → alertes **CTFd** (webhook du canal CTF) ;
+  - `Discord-Proxmox` → alertes **hôte Proxmox** (webhook dédié).
+- **Routage** (politique) : par défaut → `Discord` ; une route `cible = proxmox` → `Discord-Proxmox`.
+  Les règles Proxmox portent le label `cible: proxmox` pour être aiguillées vers le bon canal.
+- **Règles** (`/etc/grafana/provisioning/alerting/rules.yaml`), routées selon le tableau ci-dessous :
 
 | Règle | Condition | Sévérité |
 |---|---|---|
