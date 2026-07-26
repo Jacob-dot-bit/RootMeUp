@@ -28,11 +28,11 @@ En désassemblant `check_license()` (Ghidra, IDA, ou `objdump -d`), on voit :
 La licence est donc `LICENSE_ENC ^ 0x5C`. Récupération rapide :
 
 ```python
-enc = [41, 50, 48, 108, 63, 55, 3, 40, 52, 111, 3, 42, 104, 41, 48, 40]
-print(bytes(b ^ 0x5C for b in enc).decode())   # -> unl0ck_th3_v4ult
+enc = [41, 50, 48, 108, 63, 55, 3, 42, 104, 41, 48, 40, 101, 3, 110, 108, 110, 106]
+print(bytes(b ^ 0x5C for b in enc).decode())   # -> unl0ck_v4ult9_2026
 ```
 
-En saisissant `unl0ck_th3_v4ult`, le programme affiche le **flag 1** et donne accès au « terminal de maintenance ».
+En saisissant `unl0ck_v4ult9_2026`, le programme affiche le **flag 1** et donne accès au « terminal de maintenance ».
 
 ## Étape 2 — Débordement de tampon (ret2win)
 
