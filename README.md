@@ -19,6 +19,7 @@ Plateforme CTF open-source pour étudiants et professionnels cybersécurité. Ch
 - [Sécurité](#sécurité)
 - [Durcissement du serveur](#durcissement-du-serveur)
 - [Supervision](#supervision)
+- [Documentation](#documentation)
 - [Équipe projet](#équipe-projet)
 - [Liens utiles](#liens-utiles)
 - [Licence](#licence)
@@ -185,6 +186,17 @@ Grafana + Prometheus dédiée. Détail : **[`docs/SUPERVISION.md`](docs/SUPERVIS
 
 ![Dashboard Grafana — Node Exporter Full (VM CTFd)](docs/img/grafana-dashboard.png)
 
+## Documentation
+
+| Document | Contenu |
+|---|---|
+| [`docs/architecture.md`](docs/architecture.md) | Architecture détaillée (composants, flux réseau, isolation) + schéma Mermaid |
+| [`docs/tech-stack.md`](docs/tech-stack.md) | Pile technique et rôle de chaque brique |
+| [`docs/security.md`](docs/security.md) | Mesures de sécurité et durcissement (CIS) |
+| [`docs/DEPLOIEMENT.md`](docs/DEPLOIEMENT.md) | Déploiement d'un challenge (build, flags/rotation, câblage CTFd, branches) |
+| [`docs/SUPERVISION.md`](docs/SUPERVISION.md) | Supervision (Grafana/Prometheus, alertes Discord, dead man's switch) |
+| [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) | Bugs rencontrés & corrections (retour d'expérience) |
+
 ## Équipe projet
 
 | Membre | Rôle |
@@ -199,7 +211,15 @@ Grafana + Prometheus dédiée. Détail : **[`docs/SUPERVISION.md`](docs/SUPERVIS
 - Dépôt technique (ce dépôt) : https://github.com/Jacob-dot-bit/RootMeUp
 - Dépôt joueurs (guides) : https://github.com/Jacob-dot-bit/RootMeUp-CTF
 - Suivi des tâches (Trello) : https://trello.com/b/noVfLRlC/rootmeup
-- Plugin CTFd : https://github.com/Bigyls/CTFdDockerContainersPlugin
+
+**Technologies utilisées :**
+- CTFd : https://github.com/CTFd/CTFd
+- Plugin CTFd (conteneurs) : https://github.com/Bigyls/CTFdDockerContainersPlugin
+- Docker : https://www.docker.com/ · containerd : https://containerd.io/
+- Tailscale : https://tailscale.com/
+- Grafana : https://grafana.com/ · Prometheus : https://prometheus.io/
+- Healthchecks.io (dead man's switch) : https://healthchecks.io/
+- Benchmark CIS Debian : https://www.cisecurity.org/benchmark/debian_linux
 
 ## Licence
 
