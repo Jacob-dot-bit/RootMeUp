@@ -32,7 +32,7 @@ FROM debian:12-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         openssh-server socat \
-        gdb binutils file less nano procps \
+        gcc gdb binutils file less nano procps \
         python3 python3-pip netcat-openbsd ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
