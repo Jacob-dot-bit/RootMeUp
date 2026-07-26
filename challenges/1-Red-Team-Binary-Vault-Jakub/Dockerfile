@@ -2,7 +2,7 @@
 #
 # Modèle "environnement fourni" (comme le challenge Memory / pwn.college) :
 #   - le joueur se connecte en SSH (compte 'hacker'),
-#   - le binaire vulnérable + les outils (gdb, radare2, pwntools...) sont déjà là,
+#   - le binaire vulnérable + les outils (gdb, objdump, pwntools...) sont déjà là,
 #   - le service vulnérable tourne EN LOCAL sous l'utilisateur 'vault' (seul à pouvoir
 #     lire les flags) : le joueur doit l'EXPLOITER (nc localhost 9003), il ne peut PAS
 #     simplement `cat` les flags.
@@ -32,7 +32,7 @@ FROM debian:12-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         openssh-server socat \
-        gdb radare2 binutils file less nano \
+        gdb binutils file less nano procps \
         python3 python3-pip netcat-openbsd ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
