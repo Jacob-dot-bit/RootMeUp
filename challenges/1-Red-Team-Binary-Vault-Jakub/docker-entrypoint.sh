@@ -1,6 +1,12 @@
 #!/bin/sh
-# Sert le binaire vulnerable : une instance par connexion TCP.
+# Boîte stand-alone VAULT-9.
+# 1) Démarre le service vulnérable sous l'utilisateur 'vault' (seul à pouvoir lire
+#    les flags), en écoute LOCALE : le joueur doit l'exploiter via `nc localhost 9003`,
+#    il ne peut pas `cat` les flags depuis son compte.
+# 2) Démarre sshd au premier plan (processus principal du conteneur).
 set -e
-PORT="${CHALLENGE_PORT:-9003}"
-echo "[*] VAULT-9 en ecoute sur le port ${PORT}"
-exec socat -T120 TCP-LISTEN:"${PORT}",reuseaddr,fork EXEC:"/challenge/vault",stderr
+
+su -s /bin/sh vault -c \
+  'socat -T300 TCP-LISTEN:9003,bind=127.0.0.1,reuseaddr,fork EXEC:/challenge/vault,stderr' &
+
+exec /usr/sbin/sshd -D -e
