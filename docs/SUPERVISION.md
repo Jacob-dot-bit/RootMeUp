@@ -21,26 +21,43 @@ flowchart LR
         ctfd["CTFd (Apache :80)"]
     end
 
+    subgraph pve["Hôte Proxmox — 192.168.100.1 (vmbr1, interne)"]
+        pnode["node_exporter :9100<br/>(CPU / RAM / disque hyperviseur)"]
+    end
+
     discord["🔔 Discord<br/>(webhook — secret)"]
 
     prometheus -->|scrape| node
+    prometheus -->|scrape interne| pnode
     grafana -->|alertes| discord
 ```
 
-- **node_exporter** (sur la VM CTF) : expose CPU / RAM / disque / réseau.
-- **Prometheus** (VM Grafana) : collecte (scrape) les métriques toutes les 15 s.
+- **node_exporter** (sur la VM CTF **et** sur l'hôte Proxmox) : expose CPU / RAM / disque / réseau.
+- **Prometheus** (VM Grafana) : collecte (scrape) les métriques toutes les 15 s — cibles `ctf-vm` et `proxmox-host`.
 - **Grafana** (VM Grafana) : dashboards + moteur d'alerting.
 - **Discord** : réception des alertes (webhook — **secret, non committé**, voir §Sécurité).
+
+L'hôte Proxmox est scrapé **en interne** via son IP `vmbr1` (`192.168.100.1`) : node_exporter y
+écoute **uniquement** sur cette IP, jamais sur l'IP publique `54.36.121.105`.
 
 La VM Grafana est une VM Debian dédiée sur le Proxmox (`vmbr1`, Internet via NAT de
 l'hôte, accès distant par Tailscale).
 
 ## Installation / reproduction
 
-### 1. Sur la VM CTF — agent de métriques
+### 1. Agents de métriques (node_exporter)
+**Sur la VM CTF :**
 ```bash
 sudo apt install -y prometheus-node-exporter
 sudo systemctl enable --now prometheus-node-exporter   # écoute sur :9100
+```
+**Sur l'hôte Proxmox** — même paquet, mais on **restreint l'écoute à l'IP interne**
+`vmbr1` (sinon node_exporter serait exposé sur l'IP publique) :
+```bash
+apt install -y prometheus-node-exporter
+echo 'ARGS="--web.listen-address=192.168.100.1:9100"' > /etc/default/prometheus-node-exporter
+systemctl restart prometheus-node-exporter
+ss -tlnp | grep 9100      # doit afficher 192.168.100.1:9100, PAS 0.0.0.0
 ```
 
 ### 2. Sur la VM Grafana — Grafana + Prometheus
@@ -54,13 +71,17 @@ sudo apt update && sudo apt install -y grafana prometheus
 sudo systemctl enable --now grafana-server prometheus
 ```
 
-### 3. Prometheus — scraper la VM CTF
+### 3. Prometheus — scraper la VM CTF et l'hôte Proxmox
 Ajouter dans `/etc/prometheus/prometheus.yml` :
 ```yaml
 scrape_configs:
   - job_name: 'ctf-vm'
     static_configs:
       - targets: ['100.118.132.76:9100']
+  - job_name: 'proxmox-host'
+    static_configs:
+      - targets: ['192.168.100.1:9100']   # hôte Proxmox via vmbr1 (interne)
+        labels: { instance: 'proxmox' }
 ```
 ```bash
 sudo systemctl restart prometheus
@@ -91,8 +112,11 @@ remplacer `${DS_PROMETHEUS}` par `prometheus`).
 | Règle | Condition | Sévérité |
 |---|---|---|
 | Serveur CTFd injoignable | `up{job="ctf-vm"} == 0` pendant 1 min | critique |
-| Disque presque plein | filesystem `ext4/xfs` de la VM CTF > 85 % pendant 5 min | warning |
-| RAM haute | mémoire utilisée de la VM CTF > 90 % pendant 5 min | warning |
+| Disque presque plein (VM CTF) | filesystem `ext4/xfs` de la VM CTF > 85 % pendant 5 min | warning |
+| RAM haute (VM CTF) | mémoire utilisée de la VM CTF > 90 % pendant 5 min | warning |
+| Hôte Proxmox injoignable | `up{job="proxmox-host"} == 0` pendant 1 min | critique |
+| Disque presque plein (Proxmox) | filesystem `ext4/xfs/zfs` de l'hyperviseur (dont `/var/lib/vz`) > 85 % pendant 5 min | critique |
+| RAM haute (Proxmox) | mémoire utilisée de l'hyperviseur > 90 % pendant 5 min | warning |
 
 ## Accès
 
