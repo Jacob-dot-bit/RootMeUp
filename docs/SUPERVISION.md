@@ -36,7 +36,7 @@ flowchart LR
 ```
 
 - **node_exporter** (sur la VM CTF **et** sur l'hôte Proxmox) : expose CPU / RAM / disque / réseau.
-- **Prometheus** (VM Grafana) : collecte (scrape) les métriques toutes les 15 s — cibles `ctf-vm` et `proxmox-host`.
+- **Prometheus** (VM Grafana) : collecte (scrape) les métriques toutes les 15 s — cibles `ctf-vm`, `proxmox-host` et `cadvisor` (métriques conteneurs de la VM CTF).
 - **Grafana** (VM Grafana) : dashboards + moteur d'alerting.
 - **Discord** : réception des alertes (webhook — **secret, non committé**, voir §Sécurité).
 
@@ -85,6 +85,10 @@ scrape_configs:
     static_configs:
       - targets: ['192.168.100.1:9100']   # hôte Proxmox via vmbr1 (interne)
         labels: { instance: 'proxmox' }
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['100.118.132.76:8080']  # cAdvisor sur la VM CTF (métriques conteneurs)
+        labels: { instance: 'ctf-vm' }
 ```
 ```bash
 sudo systemctl restart prometheus

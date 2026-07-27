@@ -89,7 +89,7 @@ direction TB
 
 subgraph WEB["Accès Web"]
 
-GRAFNG["Nginx<br/>Reverse Proxy HTTPS<br/>Certificat Tailscale"]
+GRAFNG["tailscale serve<br/>HTTPS (cert Let's Encrypt)"]
 
 GRAF["Grafana"]
 
@@ -97,13 +97,13 @@ end
 
 PROM["Prometheus"]
 
-ALERT["Alertmanager"]
+ALERT["Alerting (moteur Grafana)"]
 
 GRAFNG --> GRAF
 
 PROM --> GRAF
 
-PROM --> ALERT
+GRAF --> ALERT
 
 end
 
@@ -156,10 +156,10 @@ voir [`security.md`](security.md)).
 
 ## VM 2 – Supervision
 
-- **Nginx** : reverse proxy HTTPS protégeant l'accès à Grafana via le réseau Tailscale.
+- **tailscale serve** : termine le TLS (HTTPS, cert Let's Encrypt) et proxifie vers Grafana — pas de reverse proxy nginx sur cette VM.
 - **Prometheus** : collecte périodiquement les métriques exposées par les exporters de la VM CTF.
 - **Grafana** : fournit les tableaux de bord de supervision et de suivi des performances.
-- **Alertmanager** : envoie les alertes vers Discord lorsqu'un seuil est dépassé.
+- **Alerting Grafana** : le moteur d'alerting intégré à Grafana route les alertes vers Discord (pas d'Alertmanager séparé).
 
 ## Réseau privé
 
@@ -190,10 +190,9 @@ Cette machine est durcie conformément au benchmark **CIS Debian 13**.
 
 Elle héberge :
 
-- Nginx
-- Grafana
+- Grafana (+ moteur d'alerting intégré)
 - Prometheus
-- Alertmanager
+- tailscale serve (HTTPS)
 
 Cette VM supervise en permanence la VM CTF ainsi que ses conteneurs Docker.
 
@@ -243,7 +242,7 @@ Grafana interroge Prometheus pour afficher les tableaux de bord.
 
 ## Alertes
 
-Alertmanager surveille les règles définies dans Prometheus et envoie les notifications vers un webhook Discord lorsque des seuils critiques sont atteints (CPU, mémoire, disque, indisponibilité d'un service, etc.).
+Le moteur d'alerting de **Grafana** évalue les règles et envoie les notifications vers des webhooks **Discord** (canaux distincts CTFd / Proxmox) lorsqu'un seuil critique est atteint (disque, mémoire, indisponibilité d'un service, etc.).
 
 ---
 
@@ -314,8 +313,8 @@ Vérifier Grafana :
 sudo systemctl status grafana-server
 ```
 
-Vérifier Alertmanager :
+Vérifier le mapping HTTPS (tailscale serve) :
 
 ```bash
-sudo systemctl status alertmanager
+tailscale serve status
 ```
