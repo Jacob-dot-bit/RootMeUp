@@ -107,9 +107,13 @@ datasources:
     url: http://localhost:9090
     isDefault: true
 ```
-Dashboard **« Node Exporter Full » (ID 1860)** provisionné dans
-`/var/lib/grafana/dashboards/` (télécharger depuis `grafana.com/api/dashboards/1860`,
-remplacer `${DS_PROMETHEUS}` par `prometheus`).
+Deux dashboards provisionnés dans `/var/lib/grafana/dashboards/` :
+- **« Node Exporter Full » (ID 1860)** — détail système par hôte (télécharger depuis
+  `grafana.com/api/dashboards/1860`, remplacer `${DS_PROMETHEUS}` par `prometheus`).
+- **« RootMeUp — Vue d'ensemble »** — dashboard maison (versionné dans le dépôt :
+  [`infra/grafana/dashboards/rootmeup-overview.json`](../infra/grafana/dashboards/rootmeup-overview.json)) :
+  santé des hôtes (CTFd / Proxmox / supervision), **disque utilisé par hôte** (le risque du T2),
+  CPU/RAM par hôte, nombre d'**instances de challenges** en cours et CPU par conteneur (cAdvisor).
 
 ### 5. Alerting Discord
 - **Deux points de contact** dans `/etc/grafana/provisioning/alerting/discord.yaml`
