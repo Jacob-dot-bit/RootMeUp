@@ -128,8 +128,6 @@ remplacer `${DS_PROMETHEUS}` par `prometheus`).
 | Hôte Proxmox injoignable | `up{job="proxmox-host"} == 0` pendant 1 min | critique |
 | Disque presque plein (Proxmox) | filesystem `ext4/xfs/zfs` de l'hyperviseur (dont `/var/lib/vz`) > 85 % pendant 5 min | critique |
 | RAM haute (Proxmox) | mémoire utilisée de l'hyperviseur > 90 % pendant 5 min | warning |
-| Instance de challenge up | suivi de l'utilisation des instances du CTF | info |
-| Instance non arrêtée correctement | vérification d'instances orpheline | warning |
 
 ### 6. Détection de la panne totale (dead man's switch)
 
