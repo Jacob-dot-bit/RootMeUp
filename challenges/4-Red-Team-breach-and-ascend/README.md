@@ -1,6 +1,6 @@
 # 🔴 Red Team 4 — Breach & Ascend
 
-**Auteur :** Lucas
+**Auteur :** Evan
 Intrusion d'une **application web** (upload de fichiers) puis **élévation de privilèges**
 pas à pas jusqu'à `root`.
 
@@ -49,7 +49,7 @@ web/uploads/            ← répertoire d'upload (.gitkeep, .htaccess)
 
 ## 📚 Documentation
 
-- Solution / write-up : _à ajouter par Lucas (`solution/SOLUTION.md`)._
+- Solution / write-up : _à ajouter par Evan (`solution/SOLUTION.md`)._
 - Guide joueur (sans spoiler) : dépôt joueurs `RootMeUp-CTF`
 
-> _TODO Lucas : renommer l'image en `rootmeup/rt4-breach-and-ascend`, ajouter un write-up._
+> _TODO Evan : renommer l'image en `rootmeup/rt4-breach-and-ascend`, ajouter un write-up._
