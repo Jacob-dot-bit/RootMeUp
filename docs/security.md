@@ -8,3 +8,6 @@ Liste des exigences de sécurité appliquées :
 - Durcissement conforme au benchmark CIS Debian.
 - Cloisonnement des challenges via conteneurs Docker (un conteneur par équipe, géré par containerd).
 - Accès à la plateforme restreint au réseau Tailscale.
+- **Administration de l'hyperviseur Proxmox restreinte au tailnet** : l'UI Proxmox (`8006`), le SSH de l'hôte (`22`) et le proxy SPICE (`3128`) ne sont plus accessibles depuis Internet — filtrés sur l'interface publique, autorisés uniquement via Tailscale (interface `tailscale0`) et le réseau interne (`vmbr1`). Le tunnel Tailscale (UDP `41641`) et la console KVM OVH restent disponibles comme accès de secours.
+- **HTTPS** : CTFd (TLS terminé par Apache) et Grafana (TLS via `tailscale serve`) — certificats Let's Encrypt, aucun accès en clair.
+- **Secrets hors dépôt** : flags rotés lus au build depuis `challenge.env` (gitignoré) ; webhooks Discord et URL de heartbeat uniquement sur les VMs, jamais dans git.
