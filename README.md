@@ -230,7 +230,7 @@ Numérotation par équipe (`N-Blue-Team-*` / `N-Red-Team-*`).
 | Blue 1 | `challenges/1-Blue-Team-Phishing-ELK-Sarah` | Phishing sur corp.local — analyse de logs (ELK) | Blue Team | Intégré |
 | Blue 2 | `challenges/2-Blue-Team-Memory-Forensics-Jakub` | Mémoire et analyse de malware (Volatility) | Blue Team | Intégré |
 | Blue 3 | `challenges/3-Blue-Team-Hardening-Lucas` | Hardening / durcissement système | Blue Team | Intégré |
-| Blue 4 | `challenges/4-Blue-Team-Helios-Incident` | Incident sur Helios corp - analyse capture réseau | Blue Team | Intégré |
+| Blue 4 | `challenges/4-Blue-Team-Helios-Incident` | Helios Incident — forensic réseau (analyse de capture PCAP) | Blue Team | En cours |
 | Red 1 | `challenges/1-Red-Team-Binary-Vault-Jakub` | VAULT-9 — reverse + exploitation binaire (ret2win) | Red Team | Intégré |
 | Red 2 | `challenges/2-Red-Team-Operation-Silent-Ledger-Lucas` | Opération Silent Ledger — machine Linux compromise (SSH → escalade → GPG) | Red Team | Intégré |
 | Red 3 | `challenges/3-Red-Team-Nexus-Cipher-Sarah` | Cipher — pentest du portail API Nexus (crypto/web, 10 flags) | Red Team | Intégré |

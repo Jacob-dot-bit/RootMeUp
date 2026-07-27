@@ -33,6 +33,18 @@ Règles :
 4. « Able to merge » (vert) = *pas de conflit*, ça ne veut PAS dire « sans danger » :
    une suppression n'est pas un conflit. Toujours vérifier « Files changed ».
 
+## 2bis. Structure d'un challenge (convention)
+
+Pour que le dépôt reste **homogène**, chaque challenge suit la même structure de base et
+**fournit un `README.md`** (modèle : [`challenges/_TEMPLATE/README.md`](../challenges/_TEMPLATE/README.md)).
+
+- Dossier : `challenges/N-Team-Nom-Auteur/` (numérotation par équipe + suffixe auteur).
+- **Obligatoire** : `README.md` (résumé, scénario, flags/format, accès, déploiement) + le
+  `Dockerfile` (ou, pour un challenge « fichier », le média fourni — ex. un `.pcap`).
+- **Recommandé** : `docs/USER_GUIDE.md` (joueur), `solution/SOLUTION.md` (⚠️ spoilers),
+  `setup/challenge.env.example` (si flags rotés).
+- **Cohérence** : format de flag aligné sur CTFd, nom d'image `rootmeup/<code>:1.0`.
+
 ## 3. Flags : rotation & `challenge.env`
 
 Le dépôt est **public** (pour le jury) : les **vrais flags ne doivent jamais y être
