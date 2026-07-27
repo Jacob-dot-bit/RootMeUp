@@ -90,10 +90,11 @@ se fait **une fois** par challenge/serveur (et à chaque changement de code ou d
 |---|---|---|---|
 | `1-Blue-Team-Phishing-ELK-Sarah` | `rootmeup/bt1-phishing-elk:1.0` | `5601` | HTTP (Kibana) |
 | `2-Blue-Team-Memory-Forensics-Jakub` | `rootmeup/bt2-memory-forensics:1.0` | `22` | SSH (`analyst`/`forensics`) — boîte d'analyse, dump + outils dedans |
+| `3-Blue-Team-Hardening-Lucas` | `rootmeup/bt3-hardening:1.1` | `8000` | SSH / durcissement |
+| `4-Blue-Team-Helios-Incident-Evan` | `fichier pcap` | `N/A` | Forensics / réseau |
 | `1-Red-Team-Binary-Vault-Jakub` | `rootmeup/rt1-binary-vault:1.0` | `22` | SSH (`hacker`/`vault9`) — boîte stand-alone : binaire + outils (gdb, objdump, pwntools) + service local `nc localhost 9003` |
 | `2-Red-Team-Operation-Silent-Ledger-Lucas` | `rootmeup/rt2-silent-ledger:1.1` | `22` | SSH / service |
 | `3-Red-Team-Nexus-Cipher-Sarah` | `rootmeup/rt3-ciphers-nexus:1.0` | `8080` | HTTP (API) |
-| `3-Blue-Team-Hardening-Lucas` | `rootmeup/bt3-hardening:1.1` | `8000` | SSH / durcissement |
 | `4-Red-Team-breach-and-ascend` | `rt4-beach-and-ascend:1.3` ⚠️ | `80` | HTTP (web → root) |
 
 > ⚠️ L'image de *breach-and-ascend* est nommée `rt4-beach-and-ascend:1.3` — **sans le préfixe

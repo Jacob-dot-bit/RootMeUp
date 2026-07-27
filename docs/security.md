@@ -1,13 +1,16 @@
 Liste des exigences de sécurité appliquées :
-- SSH par clé uniquement, connexion root interdite.
-- Pare-feu iptables filtrant les flux entrants et sortants.
+- Désactivation des modules et services inutiles.
+- Partionnement des filesystem sur les deux VM.
+- SSH durci par clé uniquement, connexion root interdite.
+- Pare-feu iptables filtrant les flux entrants et sortants (politique liste blanche).
 - Fail2Ban contre les tentatives de brute force.
 - auditd pour la surveillance des actions sensibles (changements de mots de passe, modifications de fichiers).
 - Politique de mots de passe stricte pour les comptes locaux.
+- Permissions des fichiers et dossiers strictes.
 - Mises à jour automatiques (unattended-upgrades).
 - Durcissement conforme au benchmark CIS Debian.
 - Cloisonnement des challenges via conteneurs Docker (un conteneur par équipe, géré par containerd).
 - Accès à la plateforme restreint au réseau Tailscale.
 - **Administration de l'hyperviseur Proxmox restreinte au tailnet** : l'UI Proxmox (`8006`), le SSH de l'hôte (`22`) et le proxy SPICE (`3128`) ne sont plus accessibles depuis Internet — filtrés sur l'interface publique, autorisés uniquement via Tailscale (interface `tailscale0`) et le réseau interne (`vmbr1`). Le tunnel Tailscale (UDP `41641`) et la console KVM OVH restent disponibles comme accès de secours.
-- **HTTPS** : CTFd (TLS terminé par Apache) et Grafana (TLS via `tailscale serve`) — certificats Let's Encrypt, aucun accès en clair.
+- **HTTPS** : CTFd (TLS terminé par Apache) et Grafana (TLS via `tailscale serve`) — certificats Let's Encrypt, chiffrement des communications, aucun accès en clair.
 - **Secrets hors dépôt** : flags rotés lus au build depuis `challenge.env` (gitignoré) ; webhooks Discord et URL de heartbeat uniquement sur les VMs, jamais dans git.

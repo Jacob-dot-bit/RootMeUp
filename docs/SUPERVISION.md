@@ -124,13 +124,15 @@ remplacer `${DS_PROMETHEUS}` par `prometheus`).
 | Hôte Proxmox injoignable | `up{job="proxmox-host"} == 0` pendant 1 min | critique |
 | Disque presque plein (Proxmox) | filesystem `ext4/xfs/zfs` de l'hyperviseur (dont `/var/lib/vz`) > 85 % pendant 5 min | critique |
 | RAM haute (Proxmox) | mémoire utilisée de l'hyperviseur > 90 % pendant 5 min | warning |
+| Instance de challenge up | suivi de l'utilisation des instances du CTF | info |
+| Instance non arrêtée correctement | vérification d'instances orpheline | warning |
 
 ### 6. Détection de la panne totale (dead man's switch)
 
 ⚠️ **Angle mort** : Grafana/Prometheus tournent dans une VM **hébergée sur le Proxmox**.
 Si l'hôte tombe **totalement** (crash, coupure de courant, reboot), la VM Grafana meurt
 avec lui → le moteur d'alerte est mort et ne peut PAS envoyer d'alerte. Une supervision
-ne peut pas signaler sa propre mort.
+ne peut pas signaler sa propre mort. 
 
 **Parade** : un *dead man's switch* **externe** via [healthchecks.io](https://healthchecks.io).
 La VM Grafana envoie un **battement** (ping HTTP) toutes les 2 min ; si les battements
