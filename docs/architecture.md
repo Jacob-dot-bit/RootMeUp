@@ -122,6 +122,25 @@ ALERT --> DISCORD
 
 ---
 
+# Plan d'adressage
+
+Toutes les machines sont sur un **tailnet Tailscale unique** (`tail8588a8`) ; l'accès distant
+se fait uniquement par ce VPN. Seul l'hôte Proxmox possède une IP publique (admin filtrée,
+voir [`security.md`](security.md)).
+
+| Machine | Rôle | Nom MagicDNS | IP tailnet | IP interne (`vmbr1`) |
+|---|---|---|---|---|
+| `ctf-rootmeup` | Plateforme CTFd + instances de challenges | `ctf-rootmeup.tail8588a8.ts.net` | `100.118.132.76` | 192.168.100.x |
+| `grafana` | Supervision (Grafana + Prometheus) | `grafana.tail8588a8.ts.net` | `100.107.171.116` | `192.168.100.51` |
+| `ns3092722` | Hyperviseur Proxmox | `ns3092722.tail8588a8.ts.net` | `100.98.246.62` | passerelle `192.168.100.1` |
+
+- **IP publique** (hyperviseur uniquement) : `54.36.121.105` — admin (`22/8006/3128`) **filtrée**,
+  accessible seulement via le tailnet.
+- **Services HTTPS** : CTFd `https://ctf-rootmeup.tail8588a8.ts.net/` (TLS Apache),
+  Grafana `https://grafana.tail8588a8.ts.net` (TLS `tailscale serve`).
+
+---
+
 # Composants
 
 ## VM 1 – Plateforme CTF
