@@ -8,7 +8,7 @@ plein**) plutôt que de les subir.
 
 ```mermaid
 flowchart LR
-    subgraph grafana_vm["VM Grafana — Tailscale 100.84.158.83"]
+    subgraph grafana_vm["VM Grafana — Tailscale 100.107.171.116"]
         direction TB
         prometheus["Prometheus :9090<br/>(scrape /15 s)"]
         grafana["Grafana :3000<br/>dashboards + règles d'alerte"]
@@ -147,7 +147,7 @@ après `period + grace` (≈ 10 min).
 
 ## Accès
 
-- **Grafana** : **`https://grafana.tail2f7520.ts.net`** (HTTPS via Tailscale, cert Let's Encrypt auto).
+- **Grafana** : **`https://grafana.tail8588a8.ts.net`** (HTTPS via Tailscale, cert Let's Encrypt auto).
 - **Prometheus** : écoute en **local uniquement** (`127.0.0.1:9090`) sur la VM Grafana — non exposé
   sur le tailnet (interrogeable via un tunnel SSH ou depuis la VM). C'est Grafana qui l'expose via ses dashboards.
 - Dashboard : *Dashboards → Node Exporter Full*, sélectionner le job `ctf-vm`.
@@ -165,7 +165,7 @@ tailscale serve status             # vérifier le mapping
 # désactiver si besoin : tailscale serve --https=443 off
 ```
 Côté Grafana (`/etc/grafana/grafana.ini`, section `[server]`) : `domain` et `root_url`
-pointent sur `https://grafana.tail2f7520.ts.net/` pour que les liens générés soient corrects.
+pointent sur `https://grafana.tail8588a8.ts.net/` pour que les liens générés soient corrects.
 
 ## Sécurité
 
