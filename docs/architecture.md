@@ -118,6 +118,11 @@ PROM -. scrape :8080 .-> CAD
 DISCORD["Discord équipe<br/>(Webhook)"]
 
 ALERT --> DISCORD
+
+HC["☠️ healthchecks.io<br/>(dead man's switch, externe)"]
+
+GRAF -. heartbeat /2 min .-> HC
+HC -. si le battement s'arrête .-> DISCORD
 ```
 
 ---
@@ -243,6 +248,8 @@ Grafana interroge Prometheus pour afficher les tableaux de bord.
 ## Alertes
 
 Le moteur d'alerting de **Grafana** évalue les règles et envoie les notifications vers des webhooks **Discord** (canaux distincts CTFd / Proxmox) lorsqu'un seuil critique est atteint (disque, mémoire, indisponibilité d'un service, etc.).
+
+**Dead man's switch (détection de la panne totale).** Grafana/Prometheus étant hébergés sur le Proxmox, une panne **totale** de l'hyperviseur tuerait aussi la supervision — qui ne pourrait donc pas alerter. Parade : la VM de supervision envoie un **battement** régulier (toutes les 2 min) à **[healthchecks.io](https://healthchecks.io)** (service externe) ; si les battements s'arrêtent, healthchecks.io déclenche une alerte **Discord + email**. Détails : [`SUPERVISION.md`](SUPERVISION.md) §6.
 
 ---
 
