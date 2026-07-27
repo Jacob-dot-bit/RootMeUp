@@ -174,7 +174,7 @@ ALERT --> DISCORD
 ```
 
 Le serveur est une VM Debian durcie selon le benchmark CIS, qui héberge :
-- **CTFd** : service systemd (gunicorn en local sur `127.0.0.1:8000`) ; **Apache** fait reverse-proxy et **termine le TLS sur `:443`** avec un **certificat Let's Encrypt** (obtenu via `tailscale cert` pour le nom MagicDNS) → `https://ctf-rootmeup.tail8588a8.ts.net/`
+- **CTFd** : service systemd (gunicorn en local sur `127.0.0.1:8000`) ; **nginx** fait reverse-proxy et **termine le TLS sur `:443`** avec un **certificat Let's Encrypt** (obtenu via `tailscale cert` pour le nom MagicDNS) → `https://ctf-rootmeup.tail8588a8.ts.net/`
 - **Docker** : utilisé pour construire et stocker les images des challenges
 - **containerd** : runtime de conteneurs qui exécute effectivement les instances de challenges ; sert de lien entre CTFd et les conteneurs lancés
 - **CTFdDockerContainersPlugin** : plugin CTFd qui déclenche via containerd la création d'une instance par équipe lors du lancement d'un challenge
@@ -271,7 +271,7 @@ Bonnes pratiques appliquées au dépôt et à la plateforme :
 - **Isolation** — un conteneur par équipe et par challenge, réseau dédié.
 - **Pas d'exposition Internet** — l'accès passe uniquement par **Tailscale**. **CTFd** et
   **Grafana** sont servis en **HTTPS** (certificats Let's Encrypt via Tailscale) : TLS terminé
-  par **Apache** pour CTFd, par **`tailscale serve`** pour Grafana (cf. [`docs/SUPERVISION.md`](docs/SUPERVISION.md)).
+  par **nginx** pour CTFd, par **`tailscale serve`** pour Grafana (cf. [`docs/SUPERVISION.md`](docs/SUPERVISION.md)).
 
 ## Durcissement du serveur
 

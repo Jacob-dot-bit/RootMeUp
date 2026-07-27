@@ -136,7 +136,7 @@ voir [`security.md`](security.md)).
 
 - **IP publique** (hyperviseur uniquement) : `54.36.121.105` — admin (`22/8006/3128`) **filtrée**,
   accessible seulement via le tailnet.
-- **Services HTTPS** : CTFd `https://ctf-rootmeup.tail8588a8.ts.net/` (TLS Apache),
+- **Services HTTPS** : CTFd `https://ctf-rootmeup.tail8588a8.ts.net/` (TLS nginx),
   Grafana `https://grafana.tail8588a8.ts.net` (TLS `tailscale serve`).
 
 ---

@@ -9,7 +9,7 @@ comment sont gérés les flags, et la convention de branches à respecter.
 |---|---|
 | Serveur | VM `ctf-rootmeup` (Debian 13), accès **Tailscale** + SSH |
 | Dépôt sur la VM | `/srv/ctf-challenges/RootMeUp` (propriétaire `ctfd` → utiliser `sudo git -C …`) |
-| CTFd | venv Python + gunicorn sur `127.0.0.1:8000` ; **Apache** (reverse-proxy) **termine le TLS sur `:443`** (cert Let's Encrypt via `tailscale cert`) → `https://ctf-rootmeup.tail8588a8.ts.net/` |
+| CTFd | venv Python + gunicorn sur `127.0.0.1:8000` ; **nginx** (reverse-proxy) **termine le TLS sur `:443`** (cert Let's Encrypt via `tailscale cert`) → `https://ctf-rootmeup.tail8588a8.ts.net/` |
 | Base CTFd | MySQL/MariaDB local (`ctfd`) |
 | Instanciation | plugin **CTFdDockerContainersPlugin** : 1 conteneur par équipe/challenge |
 | Images | nommées `rootmeup/<code>:1.0` |

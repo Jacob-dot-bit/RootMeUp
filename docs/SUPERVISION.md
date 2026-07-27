@@ -18,7 +18,7 @@ flowchart LR
     subgraph ctf_vm["VM CTF — 100.118.132.76"]
         direction TB
         node["node_exporter :9100<br/>(CPU / RAM / disque / réseau)"]
-        ctfd["CTFd (Apache :80)"]
+        ctfd["CTFd (nginx :80)"]
     end
 
     subgraph pve["Hôte Proxmox — 192.168.100.1 (vmbr1, interne)"]

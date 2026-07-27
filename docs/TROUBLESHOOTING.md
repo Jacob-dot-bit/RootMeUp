@@ -48,7 +48,7 @@ Objectif : capitaliser (retour d'expérience) et éviter que les mêmes pièges 
 ### 2.2 Mauvais port d'accès documenté
 - **Symptôme** : la doc envoyait les joueurs sur `http://<ip>:8000`, qui ne répond pas.
 - **Cause** : `8000` est le port **interne** de gunicorn (`127.0.0.1:8000`) ; l'accès réel
-  passe par **Apache** (port 80) puis en **HTTPS**.
+  passe par **nginx** (port 80) puis en **HTTPS**.
 - **Correction** : documenter `https://ctf-rootmeup.tail8588a8.ts.net/`.
 
 ## 3. Sécurité
