@@ -132,6 +132,9 @@
     repo: https://github.com/CTFd/CTFd.git
     dest: "{{ ctfd_dir }}"
     version: "{{ ctfd_version }}"
+    # config.ini est modifié localement : on ne touche plus à un clone existant.
+    # Pour changer de version : ctfd_update=true (après sauvegarde).
+    update: "{{ ctfd_update | default(false) }}"
     force: false
   become_user: ctfd
   notify: Redémarrer ctfd
@@ -141,6 +144,7 @@
     repo: "{{ ctfd_plugin_repo }}"
     dest: "{{ ctfd_dir }}/CTFd/plugins/containers"
     version: "{{ ctfd_plugin_version }}"
+    update: "{{ ctfd_update | default(false) }}"
   become_user: ctfd
   notify: Redémarrer ctfd
 
@@ -213,12 +217,18 @@
   ansible.builtin.include_tasks: restore.yml
   when: ctfd_restore_from | length > 0
 
+# Au tout premier démarrage, la création du schéma peut échouer une fois
+# (« Table definition has changed ») : on réessaie.
 - name: CTFd actif au démarrage
   ansible.builtin.systemd_service:
     name: ctfd
     state: started
     enabled: true
     daemon_reload: true
+  register: ctfd_start
+  retries: 3
+  delay: 10
+  until: ctfd_start is succeeded
 
 # --- nginx + HTTPS ------------------------------------------------------------
 - name: Dossier des certificats
@@ -300,6 +310,9 @@
     tag: "{{ item.tag.split(':')[1] }}"
     path: "{{ challenges_dir }}/challenges/{{ item.dir }}"
     rebuild: "{{ 'always' if challenges_git.changed else 'never' }}"
+  # Builds longs : sshd coupe les sessions inactives après 5 min (ClientAliveCountMax 0).
+  async: 3600
+  poll: 20
   loop: "{{ challenge_images }}"
   loop_control:
     label: "{{ item.tag }}"
