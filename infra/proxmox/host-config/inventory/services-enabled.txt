@@ -18,6 +18,7 @@ lxc.service
 lxcfs.service
 netavark-dhcp-proxy.service
 netavark-firewalld-reload.service
+netbird.service
 netfilter-persistent.service
 networking.service
 nfs-blkmap.service

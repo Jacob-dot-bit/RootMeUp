@@ -99,6 +99,7 @@ nano
 ncurses-base
 ncurses-bin
 netbase
+netbird
 open-iscsi
 openssh-server
 openssl

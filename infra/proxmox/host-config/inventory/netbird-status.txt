@@ -1,0 +1,5 @@
+Management: Connected
+FQDN: ns3092722.netbird.cloud
+NetBird IP: 100.106.21.10/16
+Interface type: Kernel
+SSH Server: Disabled
