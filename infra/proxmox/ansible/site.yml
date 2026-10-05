@@ -11,7 +11,7 @@
     - { role: network,    tags: [network] }
     - { role: firewall,   tags: [firewall] }
     - { role: fail2ban,   tags: [fail2ban] }
-    - { role: tailscale,  tags: [tailscale] }
+    - { role: tailscale,  tags: [tailscale], when: host_tailscale_enabled }
     - { role: monitoring, tags: [monitoring] }
     - { role: storage,    tags: [storage] }
     - { role: pve_access, tags: [pve_access] }

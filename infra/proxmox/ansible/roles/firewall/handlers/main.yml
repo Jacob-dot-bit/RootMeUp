@@ -7,3 +7,4 @@
   ansible.builtin.service:
     name: tailscaled
     state: restarted
+  when: host_tailscale_enabled

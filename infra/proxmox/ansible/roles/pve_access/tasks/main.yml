@@ -2,11 +2,13 @@
   ansible.builtin.command: pvesh get /access/users --output-format json
   register: pve_users
   changed_when: false
+  check_mode: false
 
 - name: Groupes Proxmox existants
   ansible.builtin.command: pvesh get /access/groups --output-format json
   register: pve_groups
   changed_when: false
+  check_mode: false
 
 - name: Groupe des administrateurs
   ansible.builtin.command: "pveum group add {{ pve_admin_group }}"

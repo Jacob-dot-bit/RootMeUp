@@ -2,6 +2,7 @@
   ansible.builtin.command: pvesh get /cluster/backup --output-format json
   register: backup_jobs
   changed_when: false
+  check_mode: false
 
 - name: Sauvegarde hebdomadaire (vzdump)
   ansible.builtin.command: >-

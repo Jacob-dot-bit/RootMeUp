@@ -41,6 +41,9 @@ fail2ban_ignoreip:
   - "{{ lan_cidr }}"
 
 # --- Tailscale ------------------------------------------------------------
+# Tailscale a été désinstallé de l'hôte le 05/10/2026 : l'administration passe par l'IP
+# publique. Les VMs restent sur le tailnet. Passer à true pour le réinstaller sur l'hôte.
+host_tailscale_enabled: false
 tailscale_ssh: true
 
 # --- Supervision ----------------------------------------------------------
