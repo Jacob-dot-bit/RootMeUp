@@ -37,3 +37,12 @@
     --setup-key {{ netbird_setup_key }} --hostname {{ netbird_hostname | default(inventory_hostname) }}
   no_log: true
   when: (nb_status.stdout | default('{}') | from_json).management.connected | default(false) is not true
+
+- name: Adresse NetBird de la machine
+  ansible.builtin.setup:
+    gather_subset: [network]
+  check_mode: false
+
+- name: Variable vm_vpn_ip (IP NetBird, 0.0.0.0 si l'interface est absente)
+  ansible.builtin.set_fact:
+    vm_vpn_ip: "{{ ansible_facts.wt0.ipv4.address | default('0.0.0.0') }}"

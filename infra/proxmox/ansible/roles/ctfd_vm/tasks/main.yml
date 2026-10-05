@@ -1,6 +1,6 @@
 # VM CTFd : CTFd (venv + gunicorn) derrière nginx en HTTPS, MariaDB, Redis, Docker pour
-# les instances de challenges. Prérequis : Debian 13 installée (partitionnement LVM CIS),
-# comptes SSH des administrateurs et Tailscale opérationnels.
+# les instances de challenges. Prérequis : Debian 13 installée (partitionnement LVM CIS) et
+# comptes SSH des administrateurs ; NetBird est installé par le rôle netbird.
 
 - name: Dépôt Docker
   ansible.builtin.get_url:
@@ -237,21 +237,14 @@
     state: directory
     mode: "0700"
 
-- name: Certificat Let's Encrypt du tailnet
+- name: Certificat autosigné (NetBird ne délivre pas de certificat)
   ansible.builtin.command: >-
-    tailscale cert --cert-file /etc/nginx/certs/ctfd.crt
-    --key-file /etc/nginx/certs/ctfd.key {{ ctfd_domain }}
-  args:
-    creates: /etc/nginx/certs/ctfd.crt
-  when: vm_tailscale_enabled | bool
-
-- name: Certificat autosigné (VM hors tailnet)
-  ansible.builtin.command: >-
-    openssl req -x509 -nodes -newkey rsa:2048 -days 365 -subj /CN={{ ctfd_domain }}
+    openssl req -x509 -nodes -newkey rsa:4096 -days 825 -subj /CN={{ ctfd_domain }}
+    -addext "subjectAltName=DNS:{{ ctfd_domain }}"
     -keyout /etc/nginx/certs/ctfd.key -out /etc/nginx/certs/ctfd.crt
   args:
     creates: /etc/nginx/certs/ctfd.crt
-  when: not (vm_tailscale_enabled | bool)
+  notify: Recharger nginx
 
 - name: Site nginx (HTTP -> HTTPS, reverse proxy vers gunicorn)
   ansible.builtin.template:
@@ -274,13 +267,13 @@
   notify: Recharger nginx
 
 # --- Docker et challenges ---------------------------------------------------
-- name: Démon Docker (écoute des ports publiés sur l'IP tailnet, logs bornés)
+- name: Démon Docker (ports des instances publiés sur l'IP NetBird, logs bornés)
   ansible.builtin.copy:
     dest: /etc/docker/daemon.json
     mode: "0644"
     content: |
       {
-        "ip": "{{ ctf_vm_tailnet_ip }}",
+        "ip": "{{ vm_vpn_ip }}",
         "log-driver": "json-file",
         "log-opts": { "max-size": "10m", "max-file": "3" }
       }
@@ -322,7 +315,7 @@
     name: cadvisor
     image: "{{ cadvisor_image }}"
     restart_policy: unless-stopped
-    published_ports: ["{{ ctf_vm_tailnet_ip }}:8080:8080"]
+    published_ports: ["{{ vm_vpn_ip }}:8080:8080"]
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
@@ -337,7 +330,7 @@
     content: 'ARGS="--web.listen-address=0.0.0.0:9100"'
   notify: Redémarrer node_exporter
 
-- name: Pare-feu (liste blanche, accès via Tailscale ; chaînes Docker et ts-* ajoutées par les démons)
+- name: Pare-feu (liste blanche, accès via NetBird ; chaînes Docker et NETBIRD-* ajoutées par les démons)
   ansible.builtin.template:
     src: rules.v4.j2
     dest: /etc/iptables/rules.v4

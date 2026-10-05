@@ -16,7 +16,7 @@ scrape_configs:
 
   - job_name: ctf-vm
     static_configs:
-      - targets: ['{{ ctf_vm_tailnet_ip }}:9100']
+      - targets: ['{{ ctf_vm_address }}:9100']
 
   - job_name: proxmox-host
     static_configs:
@@ -25,5 +25,5 @@ scrape_configs:
 
   - job_name: cadvisor
     static_configs:
-      - targets: ['{{ ctf_vm_tailnet_ip }}:8080']
+      - targets: ['{{ ctf_vm_address }}:8080']
         labels: { instance: 'ctf-vm' }

@@ -22,6 +22,7 @@
   hosts: grafana
   become: true
   roles:
+    - { role: netbird,    tags: [netbird], when: vm_netbird_enabled | default(true) | bool }
     - { role: grafana_vm, tags: [grafana_vm] }
 
 - name: VM CTFd (plateforme + instances de challenges)
@@ -31,4 +32,5 @@
     # Fichiers temporaires hors de /opt/CTFd (home du compte ctfd, où CTFd est cloné).
     ansible_remote_tmp: /tmp/.ansible-${USER}
   roles:
-    - { role: ctfd_vm, tags: [ctfd_vm] }
+    - { role: netbird,    tags: [netbird], when: vm_netbird_enabled | default(true) | bool }
+    - { role: ctfd_vm,    tags: [ctfd_vm] }

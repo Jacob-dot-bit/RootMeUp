@@ -1,5 +1,5 @@
-# VM de supervision : Grafana + Prometheus, exposée uniquement via `tailscale serve`.
-# Prérequis : Debian 13 installée sur vmbr1 (192.168.100.51), SSH et Tailscale opérationnels.
+# VM de supervision : Grafana + Prometheus, exposée en HTTPS par nginx sur NetBird.
+# Prérequis : Debian 13 installée sur vmbr1 (192.168.100.51) avec un accès SSH root.
 
 - name: Dépôt Grafana
   ansible.builtin.get_url:
@@ -23,6 +23,7 @@
       - fail2ban
       - auditd
       - curl
+      - nginx
     state: present
     update_cache: true
 
@@ -130,10 +131,40 @@
     state: started
     enabled: true
 
-- name: HTTPS via tailscale serve (certificat Let's Encrypt du tailnet)
-  ansible.builtin.command: tailscale serve --bg --https=443 http://127.0.0.1:3000
-  changed_when: false  # commande idempotente
-  when: vm_tailscale_enabled | bool
+- name: Dossier des certificats
+  ansible.builtin.file:
+    path: /etc/nginx/certs
+    state: directory
+    mode: "0700"
+
+- name: Certificat autosigné (NetBird ne délivre pas de certificat)
+  ansible.builtin.command: >-
+    openssl req -x509 -nodes -newkey rsa:4096 -days 825 -subj /CN={{ grafana_domain }}
+    -addext "subjectAltName=DNS:{{ grafana_domain }}"
+    -keyout /etc/nginx/certs/grafana.key -out /etc/nginx/certs/grafana.crt
+  args:
+    creates: /etc/nginx/certs/grafana.crt
+  notify: Recharger nginx
+
+- name: Site nginx (HTTPS vers Grafana en loopback)
+  ansible.builtin.template:
+    src: nginx-grafana.j2
+    dest: /etc/nginx/sites-available/grafana
+    mode: "0644"
+  notify: Recharger nginx
+
+- name: Site activé
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/grafana
+    dest: /etc/nginx/sites-enabled/grafana
+    state: link
+  notify: Recharger nginx
+
+- name: Site par défaut retiré
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Recharger nginx
 
 # --- Dead man's switch -------------------------------------------------------
 - name: Unités du battement healthchecks.io
@@ -181,7 +212,7 @@
     daemon_reload: true
 
 # --- Durcissement -----------------------------------------------------------
-- name: Pare-feu (liste blanche, administration via Tailscale uniquement)
+- name: Pare-feu (liste blanche, administration via NetBird uniquement)
   ansible.builtin.template:
     src: rules.v4.j2
     dest: /etc/iptables/rules.v4
