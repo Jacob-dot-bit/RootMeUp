@@ -1,0 +1,315 @@
+# VM CTFd : CTFd (venv + gunicorn) derrière nginx en HTTPS, MariaDB, Redis, Docker pour
+# les instances de challenges. Prérequis : Debian 13 installée (partitionnement LVM CIS),
+# comptes SSH des administrateurs et Tailscale opérationnels.
+
+- name: Version de CTFd renseignée
+  ansible.builtin.assert:
+    that: ctfd_version | length > 0
+    fail_msg: "Renseigner ctfd_version (sudo git -C /opt/CTFd describe --tags sur l'ancienne VM)."
+
+- name: Dépôt Docker
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/debian/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: "0644"
+
+- name: Source APT Docker
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/docker.list
+    mode: "0644"
+    content: >
+      deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable
+
+- name: Paquets
+  ansible.builtin.apt:
+    name:
+      - nginx
+      - mariadb-server
+      - redis-server
+      - git
+      - python3-venv
+      - python3-dev
+      - build-essential
+      - libffi-dev
+      - python3-pymysql
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+      - prometheus-node-exporter
+      - fail2ban
+      - auditd
+      - libpam-pwquality
+      - iptables-persistent
+      - lynis
+      - acl
+      - python3-docker
+    state: present
+    update_cache: true
+
+# --- Comptes ----------------------------------------------------------------
+- name: Compte de service ctfd (seul membre du groupe docker)
+  ansible.builtin.user:
+    name: ctfd
+    system: true
+    home: "{{ ctfd_dir }}"
+    create_home: false
+    shell: /usr/sbin/nologin
+    groups: docker
+    append: true
+
+- name: Compte tunnel (redirection MySQL pour Grafana, sans shell)
+  ansible.builtin.user:
+    name: tunnel
+    system: true
+    shell: /usr/sbin/nologin
+    groups: _ssh
+    append: true
+
+- name: Clé autorisée du tunnel
+  ansible.posix.authorized_key:
+    user: tunnel
+    key: "{{ tunnel_public_key }}"
+    key_options: 'permitopen="127.0.0.1:3306",no-pty,no-X11-forwarding,no-agent-forwarding'
+  when: tunnel_public_key | length > 0
+
+# --- SSH --------------------------------------------------------------------
+- name: sshd durci (clé uniquement, root interdit, liste blanche)
+  ansible.builtin.template:
+    src: sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    mode: "0600"
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Recharger sshd
+
+# --- Base de données et cache -------------------------------------------------
+- name: MariaDB en loopback
+  community.general.ini_file:
+    path: /etc/mysql/mariadb.conf.d/50-server.cnf
+    section: mariadbd
+    option: bind-address
+    value: 127.0.0.1
+    mode: "0644"
+  notify: Redémarrer mariadb
+
+- name: Base ctfd
+  community.mysql.mysql_db:
+    name: ctfd
+    encoding: utf8mb4
+    collation: utf8mb4_unicode_ci
+    login_unix_socket: /run/mysqld/mysqld.sock
+
+- name: Utilisateur MariaDB ctfd
+  community.mysql.mysql_user:
+    name: ctfd
+    host: localhost
+    password: "{{ ctfd_db_password }}"
+    priv: "ctfd.*:ALL"
+    login_unix_socket: /run/mysqld/mysqld.sock
+  no_log: true
+
+- name: Redis actif
+  ansible.builtin.service:
+    name: redis-server
+    state: started
+    enabled: true
+
+# --- CTFd -------------------------------------------------------------------
+- name: Dossier de CTFd
+  ansible.builtin.file:
+    path: "{{ ctfd_dir }}"
+    state: directory
+    owner: ctfd
+    group: ctfd
+    mode: "0750"
+
+- name: Sources de CTFd
+  ansible.builtin.git:
+    repo: https://github.com/CTFd/CTFd.git
+    dest: "{{ ctfd_dir }}"
+    version: "{{ ctfd_version }}"
+    force: false
+  become_user: ctfd
+  notify: Redémarrer ctfd
+
+- name: Plugin CTFdDockerContainersPlugin
+  ansible.builtin.git:
+    repo: "{{ ctfd_plugin_repo }}"
+    dest: "{{ ctfd_dir }}/CTFd/plugins/containers"
+    version: "{{ ctfd_plugin_version }}"
+  become_user: ctfd
+  notify: Redémarrer ctfd
+
+- name: venv Python de CTFd
+  ansible.builtin.pip:
+    requirements: "{{ ctfd_dir }}/requirements.txt"
+    virtualenv: "{{ ctfd_dir }}/.venv"
+    virtualenv_command: python3 -m venv
+  become_user: ctfd
+
+- name: Dépendances du plugin
+  ansible.builtin.pip:
+    requirements: "{{ ctfd_dir }}/CTFd/plugins/containers/requirements.txt"
+    virtualenv: "{{ ctfd_dir }}/.venv"
+  become_user: ctfd
+  failed_when: false  # le plugin n'a pas toujours de requirements.txt
+
+- name: Configuration CTFd (BDD, Redis)
+  community.general.ini_file:
+    path: "{{ ctfd_dir }}/CTFd/config.ini"
+    section: server
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    owner: ctfd
+    group: ctfd
+    mode: "0600"
+  loop:
+    - { option: DATABASE_URL, value: "mysql+pymysql://ctfd:{{ ctfd_db_password }}@localhost/ctfd" }
+    - { option: REDIS_URL, value: "redis://localhost:6379" }
+  loop_control:
+    label: "{{ item.option }}"
+  no_log: true
+  notify: Redémarrer ctfd
+
+- name: Clé secrète CTFd (identique à l'ancienne pour garder les sessions et jetons valides)
+  ansible.builtin.copy:
+    dest: "{{ ctfd_dir }}/.ctfd_secret_key"
+    content: "{{ ctfd_secret_key }}"
+    owner: ctfd
+    group: ctfd
+    mode: "0600"
+  no_log: true
+  notify: Redémarrer ctfd
+
+- name: Dossier des logs CTFd
+  ansible.builtin.file:
+    path: /var/log/ctfd
+    state: directory
+    owner: ctfd
+    group: ctfd
+    mode: "0750"
+
+- name: Service ctfd (gunicorn sur 127.0.0.1:8000)
+  ansible.builtin.template:
+    src: ctfd.service.j2
+    dest: /etc/systemd/system/ctfd.service
+    mode: "0640"
+  notify: Redémarrer ctfd
+
+- name: Restauration des données CTFd
+  ansible.builtin.include_tasks: restore.yml
+  when: ctfd_restore_from | length > 0
+
+- name: CTFd actif au démarrage
+  ansible.builtin.systemd_service:
+    name: ctfd
+    state: started
+    enabled: true
+    daemon_reload: true
+
+# --- nginx + HTTPS ------------------------------------------------------------
+- name: Dossier des certificats
+  ansible.builtin.file:
+    path: /etc/nginx/certs
+    state: directory
+    mode: "0700"
+
+- name: Certificat Let's Encrypt du tailnet
+  ansible.builtin.command: >-
+    tailscale cert --cert-file /etc/nginx/certs/ctfd.crt
+    --key-file /etc/nginx/certs/ctfd.key {{ ctfd_domain }}
+  args:
+    creates: /etc/nginx/certs/ctfd.crt
+
+- name: Site nginx (HTTP -> HTTPS, reverse proxy vers gunicorn)
+  ansible.builtin.template:
+    src: nginx-ctfd.j2
+    dest: /etc/nginx/sites-available/ctfd
+    mode: "0644"
+  notify: Recharger nginx
+
+- name: Site activé
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/ctfd
+    dest: /etc/nginx/sites-enabled/ctfd
+    state: link
+  notify: Recharger nginx
+
+- name: Site par défaut retiré
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Recharger nginx
+
+# --- Docker et challenges ---------------------------------------------------
+- name: Démon Docker (écoute des ports publiés sur l'IP tailnet, logs bornés)
+  ansible.builtin.copy:
+    dest: /etc/docker/daemon.json
+    mode: "0644"
+    content: |
+      {
+        "ip": "{{ ctf_vm_tailnet_ip }}",
+        "log-driver": "json-file",
+        "log-opts": { "max-size": "10m", "max-file": "3" }
+      }
+  notify: Redémarrer docker
+
+- name: Dépôt des challenges
+  ansible.builtin.git:
+    repo: "{{ challenges_repo }}"
+    dest: "{{ challenges_dir }}"
+    version: main
+    force: false
+  register: challenges_git
+
+- name: Fichiers challenge.env (flags rotés, depuis secrets.yml)
+  ansible.builtin.copy:
+    dest: "{{ challenges_dir }}/challenges/{{ item.key }}/setup/challenge.env"
+    content: "{{ item.value }}"
+    mode: "0600"
+  loop: "{{ challenge_env | default({}) | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  no_log: true
+
+- name: Images des challenges (relancées par le plugin, jamais reconstruites par CTFd)
+  community.docker.docker_image_build:
+    name: "{{ item.tag.split(':')[0] }}"
+    tag: "{{ item.tag.split(':')[1] }}"
+    path: "{{ challenges_dir }}/challenges/{{ item.dir }}"
+    rebuild: "{{ 'always' if challenges_git.changed else 'never' }}"
+  loop: "{{ challenge_images }}"
+  loop_control:
+    label: "{{ item.tag }}"
+
+- name: cAdvisor (métriques des conteneurs pour Prometheus)
+  community.docker.docker_container:
+    name: cadvisor
+    image: "{{ cadvisor_image }}"
+    restart_policy: unless-stopped
+    privileged: true
+    devices: [/dev/kmsg]
+    published_ports: ["{{ ctf_vm_tailnet_ip }}:8080:8080"]
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+
+# --- Supervision et durcissement ---------------------------------------------
+- name: node_exporter
+  ansible.builtin.copy:
+    dest: /etc/default/prometheus-node-exporter
+    mode: "0644"
+    content: 'ARGS="--web.listen-address=0.0.0.0:9100"'
+  notify: Redémarrer node_exporter
+
+- name: Services de sécurité actifs
+  ansible.builtin.service:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop: [fail2ban, auditd]

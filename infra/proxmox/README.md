@@ -9,6 +9,7 @@ Configuration de l'hôte OVH `ns3092722` (Proxmox VE 9, Debian 13) qui héberge 
 | [`export.sh`](export.sh) | Rafraîchit `host-config/` depuis l'hôte en production. |
 | [`ansible/`](ansible/) | Playbook qui reconstruit l'hôte à partir d'une installation Proxmox neuve. |
 | [`deploy.sh`](deploy.sh) | Lance le playbook après avoir vérifié l'inventaire et les secrets. |
+| [`../vms/backup-data.sh`](../vms/backup-data.sh) | Sauvegarde les données des VMs (base CTFd, fichiers déposés, `grafana.db`) hors du dépôt. |
 
 ## Ce qui est configuré
 
@@ -22,8 +23,31 @@ Configuration de l'hôte OVH `ns3092722` (Proxmox VE 9, Debian 13) qui héberge 
 | Supervision | node_exporter écoute uniquement sur `192.168.100.1:9100` (scrapé par Prometheus) | `monitoring` |
 | Stockage | Pool ZFS `data` (miroir NVMe) : `data/zd0` → `/var/lib/vz` (stockage `local`), `data/backups` → `/var/lib/vz/backups` (stockage `backups`, 2 sauvegardes gardées) | `storage` |
 | Accès Proxmox | Groupe `Admins` (evan, lucas, sarah @pve) avec le rôle `Administrator` sur `/` | `pve_access` |
-| Sauvegardes | vzdump de la VM 100 le dimanche à 01:00, mode stop, zstd | `backups` |
+| Sauvegardes | vzdump des VMs 100 et 101 le dimanche à 01:00, mode stop, zstd | `backups` |
 | VMs | Restauration de 100 et 101 depuis leurs archives vzdump | `guests` |
+
+## Ce qui est installé dans les VMs
+
+Deux options pour remettre les VMs : restaurer leurs archives vzdump (rôle `guests`, état
+exact de la dernière sauvegarde), ou les réinstaller sur une Debian 13 neuve avec les rôles
+ci-dessous puis réimporter les données.
+
+| VM | Contenu | Rôle Ansible |
+|---|---|---|
+| `grafana` (101) | Grafana + Prometheus (loopback), HTTPS via `tailscale serve`, datasource et dashboards de [`infra/grafana/dashboards`](../grafana/dashboards/), 6 règles d'alerte, routage Discord CTFd / Proxmox, battement healthchecks.io, tunnel SSH vers la base CTFd, pare-feu, fail2ban (sshd, grafana, recidive), auditd | `grafana_vm` |
+| `ctf-rootmeup` (100) | CTFd (venv + gunicorn) et plugin CTFdDockerContainersPlugin, MariaDB et Redis en loopback, nginx HTTPS (certificat `tailscale cert`), Docker, images des 7 challenges, cAdvisor, node_exporter, compte `tunnel`, sshd durci | `ctfd_vm` |
+
+Les données ne sont pas dans le dépôt (comptes, scores, flags) : elles se sauvegardent avec
+`backup-data.sh` puis se réimportent en renseignant `ctfd_restore_from` et
+`grafana_restore_from` :
+
+```bash
+./infra/vms/backup-data.sh
+```
+
+```bash
+./infra/proxmox/deploy.sh --limit grafana,ctfd -e ctfd_restore_from=$HOME/rootmeup-backups/<date> -e grafana_restore_from=$HOME/rootmeup-backups/<date>
+```
 
 ## Secrets
 
@@ -94,11 +118,15 @@ Chaque rôle a son tag (`--tags firewall`, `--tags fail2ban`…) pour n'applique
 
 ## Points d'attention
 
-- **La VM 101 (Grafana) n'est pas dans la sauvegarde hebdomadaire** : seule la VM 100 l'est.
-  Pour la redéployer, ajouter `101` à `backup_job.vmids` ou garder une archive à part.
-- **SSH root par mot de passe** encore autorisé (`ssh_password_authentication: true`).
-  Passer à `false` une fois que chaque administrateur a déposé sa clé.
+- **SSH par clé uniquement** (`ssh_password_authentication: false`) : chaque administrateur
+  doit avoir déposé sa clé publique dans `/etc/pve/priv/authorized_keys` (lien de
+  `/root/.ssh/authorized_keys`) avant d'appliquer le rôle `base`.
 - **Ports exposés hors administration** : `rpcbind` (`111`) et `postfix` (`25`) écoutent sur
   toutes les interfaces ; ils ne sont pas utilisés et peuvent être filtrés ou désactivés.
+- **Rôle `ctfd_vm` partiellement reconstruit** : le service `ctfd`, le site nginx, la config
+  Docker, MariaDB et sshd sont relevés sur la VM. La version de CTFd (`ctfd_version`), la
+  config exacte du compte `tunnel`, le pare-feu, les jails fail2ban et les règles auditd de la
+  VM CTFd n'ont pas pu être lus (droits root requis) et restent à compléter.
+- La VM Grafana a aussi un bureau GNOME installé, qui n'est pas repris par le rôle.
 - Appliquer le rôle `network` sur l'hôte en production recharge les interfaces : à faire
   avec la console KVM OVH à portée de main.

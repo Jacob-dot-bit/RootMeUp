@@ -25,7 +25,9 @@ admin_private_ports: [3128]
 pve_api_allowed_hosts: [100.118.132.76/32]
 
 # --- SSH ------------------------------------------------------------------
-ssh_password_authentication: true
+# Connexion SSH par clé uniquement (root inclus). Tailscale SSH et la console KVM OVH restent
+# disponibles en secours.
+ssh_password_authentication: false
 
 # --- fail2ban -------------------------------------------------------------
 fail2ban_bantime: 1h
@@ -60,7 +62,7 @@ backup_job:
   comment: Backup hebdomadaire de sauvegarde du projet
   schedule: "sun 01:00"
   storage: backups
-  vmids: [100]
+  vmids: [100, 101]
   mode: stop
   compress: zstd
 
@@ -70,3 +72,7 @@ backup_job:
 guests:
   - { vmid: 100, name: projet-annuel-rootmeup-ctf, archive: "" }
   - { vmid: 101, name: grafana, archive: "" }
+
+# --- VMs ------------------------------------------------------------------
+grafana_domain: grafana.tail8588a8.ts.net
+ctf_vm_tailnet_ip: 100.118.132.76

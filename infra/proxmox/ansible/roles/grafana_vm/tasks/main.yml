@@ -1,0 +1,233 @@
+# VM de supervision : Grafana + Prometheus, exposée uniquement via `tailscale serve`.
+# Prérequis : Debian 13 installée sur vmbr1 (192.168.100.51), SSH et Tailscale opérationnels.
+
+- name: Dépôt Grafana
+  ansible.builtin.get_url:
+    url: https://apt.grafana.com/gpg.key
+    dest: /etc/apt/keyrings/grafana.asc
+    mode: "0644"
+
+- name: Source APT Grafana
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/grafana.list
+    mode: "0644"
+    content: "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main\n"
+
+- name: Paquets de supervision et de durcissement
+  ansible.builtin.apt:
+    name:
+      - grafana
+      - prometheus
+      - prometheus-node-exporter
+      - iptables-persistent
+      - fail2ban
+      - auditd
+      - curl
+    state: present
+    update_cache: true
+
+# --- Prometheus -------------------------------------------------------------
+- name: Prometheus écoute en loopback uniquement
+  ansible.builtin.copy:
+    dest: /etc/default/prometheus
+    mode: "0644"
+    content: 'ARGS="--web.listen-address=127.0.0.1:9090"'
+  notify: Redémarrer prometheus
+
+- name: Cibles Prometheus (VM CTF, hôte Proxmox, cAdvisor)
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: /etc/prometheus/prometheus.yml
+    mode: "0644"
+    validate: promtool check config %s
+  notify: Redémarrer prometheus
+
+# --- Grafana ----------------------------------------------------------------
+- name: Réglages grafana.ini
+  community.general.ini_file:
+    path: /etc/grafana/grafana.ini
+    section: "{{ item.section }}"
+    option: "{{ item.option }}"
+    value: "{{ item.value }}"
+    mode: "0640"
+    group: grafana
+  loop:
+    - { section: server, option: http_addr, value: 127.0.0.1 }
+    - { section: server, option: domain, value: "{{ grafana_domain }}" }
+    - { section: server, option: root_url, value: "https://{{ grafana_domain }}/" }
+    - { section: security, option: secret_key, value: "{{ grafana_secret_key }}" }
+  loop_control:
+    label: "{{ item.section }}.{{ item.option }}"
+  no_log: true
+  notify: Redémarrer grafana
+
+- name: Datasource Prometheus
+  ansible.builtin.copy:
+    dest: /etc/grafana/provisioning/datasources/prometheus.yml
+    mode: "0640"
+    group: grafana
+    content: |
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          uid: prometheus
+          type: prometheus
+          access: proxy
+          url: http://localhost:9090
+          isDefault: true
+  notify: Redémarrer grafana
+
+- name: Fournisseur de dashboards
+  ansible.builtin.copy:
+    dest: /etc/grafana/provisioning/dashboards/default.yml
+    mode: "0640"
+    group: grafana
+    content: |
+      apiVersion: 1
+      providers:
+        - name: default
+          type: file
+          options:
+            path: /var/lib/grafana/dashboards
+  notify: Redémarrer grafana
+
+- name: Dossier des dashboards
+  ansible.builtin.file:
+    path: /var/lib/grafana/dashboards
+    state: directory
+    owner: grafana
+    group: grafana
+    mode: "0755"
+
+- name: Dashboards (versionnés dans infra/grafana/dashboards)
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../../grafana/dashboards/"
+    dest: /var/lib/grafana/dashboards/
+    owner: grafana
+    group: grafana
+    mode: "0644"
+
+- name: Règles d'alerte
+  ansible.builtin.copy:
+    src: alert-rules.yaml
+    dest: /etc/grafana/provisioning/alerting/rules.yaml
+    mode: "0640"
+    group: grafana
+  notify: Redémarrer grafana
+
+- name: Points de contact Discord et routage (webhooks dans secrets.yml)
+  ansible.builtin.template:
+    src: discord.yaml.j2
+    dest: /etc/grafana/provisioning/alerting/discord.yaml
+    mode: "0640"
+    group: grafana
+  no_log: true
+  notify: Redémarrer grafana
+
+- name: Grafana actif au démarrage
+  ansible.builtin.service:
+    name: grafana-server
+    state: started
+    enabled: true
+
+- name: HTTPS via tailscale serve (certificat Let's Encrypt du tailnet)
+  ansible.builtin.command: tailscale serve --bg --https=443 http://127.0.0.1:3000
+  changed_when: false  # commande idempotente
+
+# --- Dead man's switch -------------------------------------------------------
+- name: Unités du battement healthchecks.io
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0600"
+  loop: [hc-heartbeat.service, hc-heartbeat.timer]
+  no_log: true
+  notify: Recharger systemd
+
+- name: Battement actif
+  ansible.builtin.systemd_service:
+    name: hc-heartbeat.timer
+    state: started
+    enabled: true
+    daemon_reload: true
+
+# --- Tunnel vers la base CTFd (datasource MySQL de Grafana) -----------------
+- name: Dossier de la clé du tunnel
+  ansible.builtin.file:
+    path: /etc/grafana-tunnel
+    state: directory
+    mode: "0700"
+
+- name: Clé privée du tunnel (secrets.yml)
+  ansible.builtin.copy:
+    dest: /etc/grafana-tunnel/id_ed25519
+    content: "{{ grafana_tunnel_private_key }}\n"
+    mode: "0600"
+  no_log: true
+
+- name: Service du tunnel SSH vers MariaDB (127.0.0.1:3307 -> VM CTF:3306)
+  ansible.builtin.template:
+    src: grafana-mysql-tunnel.service.j2
+    dest: /etc/systemd/system/grafana-mysql-tunnel.service
+    mode: "0644"
+  notify: Redémarrer le tunnel
+
+- name: Tunnel actif
+  ansible.builtin.systemd_service:
+    name: grafana-mysql-tunnel
+    state: started
+    enabled: true
+    daemon_reload: true
+
+# --- Durcissement -----------------------------------------------------------
+- name: Pare-feu (liste blanche, administration via Tailscale uniquement)
+  ansible.builtin.template:
+    src: rules.v4.j2
+    dest: /etc/iptables/rules.v4
+    mode: "0640"
+  notify: Recharger le pare-feu
+
+- name: Filtre fail2ban pour Grafana
+  ansible.builtin.copy:
+    src: fail2ban-grafana.conf
+    dest: /etc/fail2ban/filter.d/grafana.conf
+    mode: "0644"
+  notify: Redémarrer fail2ban
+
+- name: Jails fail2ban (sshd, grafana, recidive)
+  ansible.builtin.copy:
+    src: fail2ban-jails.conf
+    dest: /etc/fail2ban/jail.d/rootmeup.conf
+    mode: "0644"
+  notify: Redémarrer fail2ban
+
+- name: Règles auditd (CIS)
+  ansible.builtin.copy:
+    src: "audit/{{ item }}"
+    dest: "/etc/audit/rules.d/{{ item }}"
+    mode: "0640"
+  loop: [audit.rules, cis.rules]
+  notify: Recharger auditd
+
+# --- Restauration -----------------------------------------------------------
+# grafana.db contient les comptes, la datasource MySQL et les alertes créées dans l'UI.
+- name: Restauration de grafana.db (sauvegarde de infra/vms/backup-data.sh)
+  when: grafana_restore_from | default('') | length > 0
+  block:
+    - name: Arrêt de Grafana
+      ansible.builtin.service:
+        name: grafana-server
+        state: stopped
+
+    - name: Copie de grafana.db
+      ansible.builtin.copy:
+        src: "{{ grafana_restore_from }}/grafana.db"
+        dest: /var/lib/grafana/grafana.db
+        owner: grafana
+        group: grafana
+        mode: "0640"
+
+    - name: Redémarrage de Grafana
+      ansible.builtin.service:
+        name: grafana-server
+        state: started

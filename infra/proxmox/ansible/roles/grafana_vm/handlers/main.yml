@@ -1,0 +1,21 @@
+- name: Redémarrer prometheus
+  ansible.builtin.service: { name: prometheus, state: restarted }
+
+- name: Redémarrer grafana
+  ansible.builtin.service: { name: grafana-server, state: restarted }
+
+- name: Recharger systemd
+  ansible.builtin.systemd_service: { daemon_reload: true }
+
+- name: Redémarrer le tunnel
+  ansible.builtin.systemd_service: { name: grafana-mysql-tunnel, state: restarted, daemon_reload: true }
+
+- name: Recharger le pare-feu
+  ansible.builtin.service: { name: netfilter-persistent, state: restarted }
+
+- name: Redémarrer fail2ban
+  ansible.builtin.service: { name: fail2ban, state: restarted }
+
+- name: Recharger auditd
+  ansible.builtin.command: augenrules --load
+  changed_when: true
