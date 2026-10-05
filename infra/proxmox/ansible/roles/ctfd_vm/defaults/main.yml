@@ -1,9 +1,8 @@
-# Version de CTFd déployée (tag git de https://github.com/CTFd/CTFd).
-# À relever sur la VM en place : sudo git -C /opt/CTFd describe --tags
-ctfd_version: ""
+# Version de CTFd déployée (tag git de https://github.com/CTFd/CTFd), relevée sur la VM.
+ctfd_version: "3.8.6"
 ctfd_dir: /opt/CTFd
 ctfd_plugin_repo: https://github.com/Bigyls/CTFdDockerContainersPlugin.git
-ctfd_plugin_version: master
+ctfd_plugin_version: dc9372c
 ctfd_domain: ctf-rootmeup.tail8588a8.ts.net
 
 challenges_repo: https://github.com/Jacob-dot-bit/RootMeUp.git
@@ -24,7 +23,10 @@ ssh_allowed_users: [sjoyas, lucas, jakub, evan]
 # Clé publique du compte `tunnel` (tunnel MySQL ouvert par la VM Grafana).
 tunnel_public_key: ""
 
-cadvisor_image: gcr.io/cadvisor/cadvisor:v0.49.1
+# Seule la VM Grafana (Prometheus) scrape node_exporter (9100) et cAdvisor (8080).
+grafana_tailnet_ip: 100.107.171.116
+
+cadvisor_image: gcr.io/cadvisor/cadvisor:latest
 
 # Restauration des données : dossier local produit par infra/vms/backup-data.sh.
 # Vide = installation à blanc (CTFd affichera /setup).

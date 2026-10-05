@@ -21,7 +21,7 @@ ssh -t "$CTF" 'sudo -v' # demande le mot de passe sudo une fois
 ssh "$CTF" 'sudo mysqldump --single-transaction --routines ctfd | gzip' > "$OUT/ctfd.sql.gz"
 
 echo "Fichiers déposés CTFd..."
-ssh "$CTF" 'sudo tar -C /opt/CTFd/CTFd -czf - uploads' > "$OUT/ctfd-uploads.tar.gz"
+ssh "$CTF" 'sudo tar -C /var/lib/ctfd -czf - uploads' > "$OUT/ctfd-uploads.tar.gz"
 
 echo "Base Grafana (Grafana arrêté quelques secondes pour une copie cohérente)..."
 ssh "$GRAFANA" 'systemctl stop grafana-server; cat /var/lib/grafana/grafana.db; systemctl start grafana-server' \

@@ -1,0 +1,4 @@
+Defaults logfile="/var/log/sudo.log"
+Defaults log_input
+Defaults log_output
+Defaults use_pty

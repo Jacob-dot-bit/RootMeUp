@@ -123,10 +123,10 @@ Chaque rôle a son tag (`--tags firewall`, `--tags fail2ban`…) pour n'applique
   `/root/.ssh/authorized_keys`) avant d'appliquer le rôle `base`.
 - **Ports exposés hors administration** : `rpcbind` (`111`) et `postfix` (`25`) écoutent sur
   toutes les interfaces ; ils ne sont pas utilisés et peuvent être filtrés ou désactivés.
-- **Rôle `ctfd_vm` partiellement reconstruit** : le service `ctfd`, le site nginx, la config
-  Docker, MariaDB et sshd sont relevés sur la VM. La version de CTFd (`ctfd_version`), la
-  config exacte du compte `tunnel`, le pare-feu, les jails fail2ban et les règles auditd de la
-  VM CTFd n'ont pas pu être lus (droits root requis) et restent à compléter.
+- **Pare-feu de la VM CTFd** : la chaîne `ts-input` ajoutée par tailscaled accepte tout le
+  trafic du tailnet avant les règles du fichier ; les filtres par port (9100/8080 réservés à
+  Grafana) ne s'appliquent donc qu'en dehors de Tailscale. Avant ce relevé, ils visaient encore
+  l'ancienne IP de Grafana (`100.84.158.83`).
 - La VM Grafana a aussi un bureau GNOME installé, qui n'est pas repris par le rôle.
 - Appliquer le rôle `network` sur l'hôte en production recharge les interfaces : à faire
   avec la console KVM OVH à portée de main.
