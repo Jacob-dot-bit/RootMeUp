@@ -1,0 +1,9 @@
+# {{ ansible_managed }}
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+{% if admin_private_ports %}
+-A INPUT -i vmbr0 -p tcp -m multiport --dports {{ admin_private_ports | join(',') }} -j DROP
+{% endif %}
+COMMIT

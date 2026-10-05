@@ -130,8 +130,8 @@ HC -. si le battement s'arrête .-> DISCORD
 # Plan d'adressage
 
 Toutes les machines sont sur un **tailnet Tailscale unique** (`tail8588a8`) ; l'accès distant
-se fait uniquement par ce VPN. Seul l'hôte Proxmox possède une IP publique (admin filtrée,
-voir [`security.md`](security.md)).
+aux VMs se fait par ce VPN. Seul l'hôte Proxmox possède une IP publique, sur laquelle son
+administration est ouverte (voir [`security.md`](security.md)).
 
 | Machine | Rôle | Nom MagicDNS | IP tailnet | IP interne (`vmbr1`) |
 |---|---|---|---|---|
@@ -139,8 +139,9 @@ voir [`security.md`](security.md)).
 | `grafana` | Supervision (Grafana + Prometheus) | `grafana.tail8588a8.ts.net` | `100.107.171.116` | `192.168.100.51` |
 | `ns3092722` | Hyperviseur Proxmox | `ns3092722.tail8588a8.ts.net` | `100.98.246.62` | passerelle `192.168.100.1` |
 
-- **IP publique** (hyperviseur uniquement) : `54.36.121.105` — admin (`22/8006/3128`) **filtrée**,
-  accessible seulement via le tailnet.
+- **IP publique** (hyperviseur uniquement) : `54.36.121.105` — interface web `https://54.36.121.105:8006`
+  et SSH (`22`) ouverts et protégés par fail2ban ; SPICE (`3128`) filtré, accessible via le tailnet.
+- **Configuration de l'hyperviseur** : versionnée et redéployable, voir [`infra/proxmox/`](../infra/proxmox/).
 - **Services HTTPS** : CTFd `https://ctf-rootmeup.tail8588a8.ts.net/` (TLS nginx),
   Grafana `https://grafana.tail8588a8.ts.net` (TLS `tailscale serve`).
 

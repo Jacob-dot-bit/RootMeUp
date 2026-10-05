@@ -1,0 +1,9 @@
+- name: Recharger le pare-feu
+  ansible.builtin.service:
+    name: netfilter-persistent
+    state: restarted
+
+- name: Redémarrer tailscaled
+  ansible.builtin.service:
+    name: tailscaled
+    state: restarted

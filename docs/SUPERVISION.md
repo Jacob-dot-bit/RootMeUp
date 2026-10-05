@@ -124,14 +124,24 @@ Deux dashboards provisionnés dans `/var/lib/grafana/dashboards/` :
   Les règles Proxmox portent le label `cible: proxmox` pour être aiguillées vers le bon canal.
 - **Règles** (`/etc/grafana/provisioning/alerting/rules.yaml`), routées selon le tableau ci-dessous :
 
+**9 règles** au total (6 provisionnées via `rules.yaml`, 3 créées via l'interface Grafana) :
+
 | Règle | Condition | Sévérité |
 |---|---|---|
 | Serveur CTFd injoignable | `up{job="ctf-vm"} == 0` pendant 1 min | critique |
+| CPU serveur CTFd saturé | CPU de la VM CTF > 85 % | warning |
 | Disque presque plein (VM CTF) | filesystem `ext4/xfs` de la VM CTF > 85 % pendant 5 min | warning |
 | RAM haute (VM CTF) | mémoire utilisée de la VM CTF > 90 % pendant 5 min | warning |
 | Hôte Proxmox injoignable | `up{job="proxmox-host"} == 0` pendant 1 min | critique |
 | Disque presque plein (Proxmox) | filesystem `ext4/xfs/zfs` de l'hyperviseur (dont `/var/lib/vz`) > 85 % pendant 5 min | critique |
 | RAM haute (Proxmox) | mémoire utilisée de l'hyperviseur > 90 % pendant 5 min | warning |
+| Instance de challenge lancée | une instance de challenge (conteneur cAdvisor) est active (~2 min de délai) | info |
+| Instances orphelines non nettoyées | instance restée active anormalement longtemps | warning |
+
+> ℹ️ Les 3 dernières règles ci-dessus (CPU CTFd, instance lancée, instances orphelines) ont été
+> créées via l'**UI Grafana** (stockées dans `grafana.db`, pas dans `rules.yaml`). Pour la
+> reproductibilité, il serait bon de les **exporter dans `rules.yaml`** (sinon elles ne
+> survivent pas à une réinstallation propre depuis les fichiers de provisioning).
 
 ### 6. Détection de la panne totale (dead man's switch)
 

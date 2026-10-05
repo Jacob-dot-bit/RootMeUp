@@ -28,3 +28,7 @@ Thumbs.db
 
 # Scripts de génération (local uniquement)
 docs/generate_diagram.py
+
+# Ansible (inventaire et secrets locaux)
+infra/proxmox/ansible/inventory.ini
+infra/proxmox/ansible/secrets.yml

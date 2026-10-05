@@ -1,0 +1,19 @@
+# Redéploiement de l'hyperviseur Proxmox RootMeUp.
+# Prérequis : Proxmox VE 9 installé par le gabarit OVH (RAID1 + pool ZFS "data").
+#
+#   ansible-playbook site.yml -e @secrets.yml --ask-vault-pass
+#   ansible-playbook site.yml --tags firewall          # un seul rôle
+- name: Hyperviseur Proxmox RootMeUp
+  hosts: proxmox
+  become: true
+  roles:
+    - { role: base,       tags: [base] }
+    - { role: network,    tags: [network] }
+    - { role: firewall,   tags: [firewall] }
+    - { role: fail2ban,   tags: [fail2ban] }
+    - { role: tailscale,  tags: [tailscale] }
+    - { role: monitoring, tags: [monitoring] }
+    - { role: storage,    tags: [storage] }
+    - { role: pve_access, tags: [pve_access] }
+    - { role: backups,    tags: [backups] }
+    - { role: guests,     tags: [guests] }

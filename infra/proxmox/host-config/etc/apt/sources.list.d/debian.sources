@@ -1,0 +1,11 @@
+Types: deb deb-src
+URIs: mirror+file:///etc/apt/mirrors/debian.list
+Suites: trixie trixie-updates
+Components: main non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+Types: deb deb-src
+URIs: mirror+file:///etc/apt/mirrors/debian-security.list
+Suites: trixie-security
+Components: main non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg

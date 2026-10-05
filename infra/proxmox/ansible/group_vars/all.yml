@@ -1,0 +1,72 @@
+# Configuration de l'hyperviseur Proxmox RootMeUp (OVH ns3092722).
+# Valeurs relevées sur l'hôte en production ; voir ../host-config/ pour l'export brut.
+
+pve_hostname: ns3092722
+pve_fqdn: ns3092722.ip-54-36-121.eu
+
+# --- Réseau ---------------------------------------------------------------
+wan_iface: eno1
+wan_mac: "a4:bf:01:26:39:14"
+wan_ipv4: 54.36.121.105/24
+wan_gw4: 54.36.121.254
+wan_ipv6: 2001:41d0:203:1c69::1/128
+wan_gw6: 2001:41d0:203:1cff:ff:ff:ff:ff
+
+lan_bridge: vmbr1
+lan_ipv4: 192.168.100.1/24
+lan_cidr: 192.168.100.0/24
+
+# --- Pare-feu -------------------------------------------------------------
+# Ports d'administration ouverts sur l'IP publique (interface web et SSH).
+admin_public_ports: [22, 8006]
+# Ports filtrés sur l'IP publique, accessibles via Tailscale et vmbr1 uniquement.
+admin_private_ports: [3128]
+# Hôtes autorisés explicitement sur l'interface web, quelle que soit l'interface (VM CTFd).
+pve_api_allowed_hosts: [100.118.132.76/32]
+
+# --- SSH ------------------------------------------------------------------
+ssh_password_authentication: true
+
+# --- fail2ban -------------------------------------------------------------
+fail2ban_bantime: 1h
+fail2ban_findtime: 10m
+fail2ban_maxretry: 5
+fail2ban_ignoreip:
+  - 127.0.0.1/8
+  - ::1
+  - 100.64.0.0/10
+  - fd7a:115c:a1e0::/48
+  - "{{ lan_cidr }}"
+
+# --- Tailscale ------------------------------------------------------------
+tailscale_ssh: true
+
+# --- Supervision ----------------------------------------------------------
+node_exporter_listen: "192.168.100.1:9100"
+
+# --- Stockage (pool ZFS "data" créé par l'installation OVH) ---------------
+zfs_pool: data
+zfs_datasets:
+  - { name: data/zd0, mountpoint: /var/lib/vz }
+  - { name: data/backups, mountpoint: /var/lib/vz/backups }
+
+# --- Accès Proxmox --------------------------------------------------------
+pve_admin_group: Admins
+pve_admins: [evan@pve, lucas@pve, sarah@pve]
+
+# --- Sauvegardes ----------------------------------------------------------
+backup_job:
+  id: backup-45c0ab57-9297
+  comment: Backup hebdomadaire de sauvegarde du projet
+  schedule: "sun 01:00"
+  storage: backups
+  vmids: [100]
+  mode: stop
+  compress: zstd
+
+# --- VMs ------------------------------------------------------------------
+# Restauration depuis les archives vzdump (copiées au préalable dans
+# /var/lib/vz/backups/dump/). Laisser archive vide pour ignorer une VM.
+guests:
+  - { vmid: 100, name: projet-annuel-rootmeup-ctf, archive: "" }
+  - { vmid: 101, name: grafana, archive: "" }

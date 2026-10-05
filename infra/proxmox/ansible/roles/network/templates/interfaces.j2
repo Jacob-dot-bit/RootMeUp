@@ -1,0 +1,28 @@
+# {{ ansible_managed }}
+
+auto lo
+iface lo inet loopback
+
+auto {{ wan_iface }}
+iface {{ wan_iface }} inet manual
+
+auto vmbr0
+iface vmbr0 inet static
+	address {{ wan_ipv4 }}
+	gateway {{ wan_gw4 }}
+	bridge-ports {{ wan_iface }}
+	bridge-stp off
+	bridge-fd 0
+	hwaddress {{ wan_mac }}
+
+iface vmbr0 inet6 static
+	address {{ wan_ipv6 }}
+	gateway {{ wan_gw6 }}
+
+auto {{ lan_bridge }}
+iface {{ lan_bridge }} inet static
+	address {{ lan_ipv4 }}
+	bridge-ports none
+	bridge-fd 0
+
+source /etc/network/interfaces.d/*

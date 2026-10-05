@@ -1,0 +1,19 @@
+- name: Jobs de sauvegarde existants
+  ansible.builtin.command: pvesh get /cluster/backup --output-format json
+  register: backup_jobs
+  changed_when: false
+
+- name: Sauvegarde hebdomadaire (vzdump)
+  ansible.builtin.command: >-
+    pvesh {{ 'set /cluster/backup/' ~ backup_job.id if job_exists else 'create /cluster/backup --id ' ~ backup_job.id }}
+    --schedule "{{ backup_job.schedule }}"
+    --storage {{ backup_job.storage }}
+    --vmid {{ backup_job.vmids | join(',') }}
+    --mode {{ backup_job.mode }}
+    --compress {{ backup_job.compress }}
+    --comment "{{ backup_job.comment }}"
+    --notes-template "{{ '{{guestname}}' }}"
+    --enabled 1
+  vars:
+    job_exists: "{{ backup_job.id in (backup_jobs.stdout | from_json | map(attribute='id') | list) }}"
+  changed_when: not job_exists

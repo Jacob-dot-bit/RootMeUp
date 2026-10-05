@@ -1,0 +1,12 @@
+# Les chaînes ts-* sont gérées par tailscaled : elles ne figurent pas dans les
+# modèles et sont recréées au redémarrage de tailscaled (handler).
+- name: Règles iptables persistantes
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/iptables/{{ item }}"
+    mode: "0640"
+    backup: true
+  loop: [rules.v4, rules.v6]
+  notify:
+    - Recharger le pare-feu
+    - Redémarrer tailscaled

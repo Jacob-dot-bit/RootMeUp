@@ -1,0 +1,5 @@
+data	396G	ONLINE
+
+data	none	off
+data/backups	/var/lib/vz/backups	off
+data/zd0	/var/lib/vz	off

@@ -1,0 +1,25 @@
+- name: Utilisateurs Proxmox existants
+  ansible.builtin.command: pvesh get /access/users --output-format json
+  register: pve_users
+  changed_when: false
+
+- name: Groupes Proxmox existants
+  ansible.builtin.command: pvesh get /access/groups --output-format json
+  register: pve_groups
+  changed_when: false
+
+- name: Groupe des administrateurs
+  ansible.builtin.command: "pveum group add {{ pve_admin_group }}"
+  when: pve_admin_group not in (pve_groups.stdout | from_json | map(attribute='groupid') | list)
+
+- name: Comptes administrateurs (realm pve)
+  ansible.builtin.command: >-
+    pveum user add {{ item }} --groups {{ pve_admin_group }}
+    --password {{ pve_user_passwords[item] }}
+  loop: "{{ pve_admins }}"
+  no_log: true
+  when: item not in (pve_users.stdout | from_json | map(attribute='userid') | list)
+
+- name: Rôle Administrator sur / pour le groupe
+  ansible.builtin.command: "pveum acl modify / --groups {{ pve_admin_group }} --roles Administrator"
+  changed_when: false  # commande idempotente
