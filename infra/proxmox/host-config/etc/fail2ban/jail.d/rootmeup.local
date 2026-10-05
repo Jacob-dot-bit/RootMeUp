@@ -1,0 +1,14 @@
+[DEFAULT]
+backend  = systemd
+bantime  = 1h
+findtime = 10m
+maxretry = 5
+ignoreip = 127.0.0.1/8 ::1 100.64.0.0/10 fd7a:115c:a1e0::/48 192.168.100.0/24
+
+[sshd]
+enabled = true
+
+[proxmox]
+enabled  = true
+port     = https,http,8006
+filter   = proxmox
