@@ -24,7 +24,7 @@ FILES=(
   /etc/apt/sources.list.d/debian.sources
   /etc/apt/sources.list.d/proxmox.sources
   /etc/apt/sources.list.d/pve-enterprise.sources
-  /etc/apt/sources.list.d/tailscale.list
+  /etc/apt/sources.list.d/netbird.list
   /etc/apt/apt.conf.d/20auto-upgrades
   /etc/pve/storage.cfg
   /etc/pve/jobs.cfg
@@ -58,8 +58,8 @@ ssh "$TARGET" "zpool list -H -o name,size,health; echo; zfs list -H -o name,moun
                                                                 > "$DEST/inventory/zfs.txt"
 ssh "$TARGET" "systemctl list-unit-files --state=enabled --no-legend --no-pager | awk '{print \$1}'" \
                                                                 > "$DEST/inventory/services-enabled.txt"
-ssh "$TARGET" "if command -v tailscale >/dev/null; then tailscale debug prefs | grep -E '\"(RunSSH|AdvertiseRoutes|ExitNodeID|NetfilterMode)\"'; else echo 'tailscale non installé'; fi" \
-                                                                > "$DEST/inventory/tailscale-prefs.txt"
+ssh "$TARGET" "netbird status 2>/dev/null | grep -E '^(Management|FQDN|NetBird IP|Interface type|SSH Server):' || echo 'netbird non installé'" \
+                                                                > "$DEST/inventory/netbird-status.txt"
 
 # Garde-fou : refuse d'écrire un export contenant une clé privée ou un hash de mot de passe.
 if grep -rlE 'PRIVATE KEY|^\$[0-9a-z]+\$|tskey-' "$DEST"; then

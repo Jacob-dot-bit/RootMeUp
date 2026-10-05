@@ -36,15 +36,16 @@ fail2ban_maxretry: 5
 fail2ban_ignoreip:
   - 127.0.0.1/8
   - ::1
-  - 100.64.0.0/10
-  - fd7a:115c:a1e0::/48
+  - "{{ netbird_cidr }}"
+  - "{{ netbird_cidr6 }}"
   - "{{ lan_cidr }}"
 
-# --- Tailscale ------------------------------------------------------------
-# Tailscale a été désinstallé de l'hôte le 05/10/2026 : l'administration passe par l'IP
-# publique. Les VMs restent sur le tailnet. Passer à true pour le réinstaller sur l'hôte.
-host_tailscale_enabled: false
-tailscale_ssh: true
+# --- NetBird ---------------------------------------------------------------
+# L'équipe est passée de Tailscale à NetBird (05/10/2026). L'hôte est joignable sur
+# 100.106.21.10 (ns3092722.netbird.cloud) en plus de son IP publique.
+netbird_management_url: https://api.netbird.io:443
+netbird_cidr: 100.106.0.0/16
+netbird_cidr6: fd00:fbfe:512d:7014::/64
 
 # --- Supervision ----------------------------------------------------------
 node_exporter_listen: "192.168.100.1:9100"

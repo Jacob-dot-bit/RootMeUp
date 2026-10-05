@@ -1,0 +1,39 @@
+# Client NetBird (réseau privé de l'équipe, géré sur app.netbird.io).
+- name: Clé du dépôt NetBird
+  ansible.builtin.get_url:
+    url: https://pkgs.netbird.io/debian/public.key
+    dest: /usr/share/keyrings/netbird-archive-keyring.asc
+    mode: "0644"
+
+- name: Dépôt NetBird
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/netbird.list
+    mode: "0644"
+    content: |
+      deb [signed-by=/usr/share/keyrings/netbird-archive-keyring.asc] https://pkgs.netbird.io/debian stable main
+
+- name: Paquet netbird
+  ansible.builtin.apt:
+    name: netbird
+    state: present
+    update_cache: true
+
+- name: Service NetBird actif
+  ansible.builtin.service:
+    name: netbird
+    state: started
+    enabled: true
+
+- name: État de connexion NetBird
+  ansible.builtin.command: netbird status --json
+  register: nb_status
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Connexion au réseau NetBird (clé d'installation dans secrets.yml)
+  ansible.builtin.command: >-
+    netbird up --management-url {{ netbird_management_url }}
+    --setup-key {{ netbird_setup_key }} --hostname {{ netbird_hostname | default(inventory_hostname) }}
+  no_log: true
+  when: (nb_status.stdout | default('{}') | from_json).management.connected | default(false) is not true

@@ -1,5 +1,5 @@
-# Les chaînes ts-* sont gérées par tailscaled : elles ne figurent pas dans les
-# modèles et sont recréées au redémarrage de tailscaled (handler).
+# Les chaînes NETBIRD-* sont gérées par le démon netbird : elles ne figurent pas dans
+# les modèles et sont recréées à son redémarrage (handler).
 - name: Règles iptables persistantes
   ansible.builtin.template:
     src: "{{ item }}.j2"
@@ -9,4 +9,4 @@
   loop: [rules.v4, rules.v6]
   notify:
     - Recharger le pare-feu
-    - Redémarrer tailscaled
+    - Redémarrer netbird

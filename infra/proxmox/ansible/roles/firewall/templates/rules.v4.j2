@@ -14,8 +14,8 @@ COMMIT
 {% for src in pve_api_allowed_hosts %}
 -A INPUT -s {{ src }} -p tcp -m tcp --dport 8006 -j ACCEPT
 {% endfor %}
-# Administration : ouverte via Tailscale et le réseau interne
--A INPUT -i tailscale0 -p tcp -m multiport --dports {{ (admin_public_ports + admin_private_ports) | join(',') }} -j ACCEPT
+# Administration : ouverte via NetBird (wt0) et le réseau interne
+-A INPUT -i wt0 -p tcp -m multiport --dports {{ (admin_public_ports + admin_private_ports) | join(',') }} -j ACCEPT
 -A INPUT -i {{ lan_bridge }} -p tcp -m multiport --dports {{ (admin_public_ports + admin_private_ports) | join(',') }} -j ACCEPT
 # Sur l'IP publique : {{ admin_public_ports | join(', ') }} ouverts (protégés par fail2ban), le reste filtré
 {% if admin_private_ports %}

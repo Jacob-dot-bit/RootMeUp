@@ -137,7 +137,7 @@ administration est ouverte (voir [`security.md`](security.md)).
 |---|---|---|---|---|
 | `ctf-rootmeup` | Plateforme CTFd + instances de challenges | `ctf-rootmeup.tail8588a8.ts.net` | `100.118.132.76` | 192.168.100.x |
 | `grafana` | Supervision (Grafana + Prometheus) | `grafana.tail8588a8.ts.net` | `100.107.171.116` | `192.168.100.51` |
-| `ns3092722` | Hyperviseur Proxmox | — (hors tailnet) | — | passerelle `192.168.100.1` |
+| `ns3092722` | Hyperviseur Proxmox | `ns3092722.netbird.cloud` (NetBird) | `100.106.21.10` (NetBird) | passerelle `192.168.100.1` |
 
 - **IP publique** (hyperviseur uniquement) : `54.36.121.105` — interface web `https://54.36.121.105:8006`
   et SSH (`22`) ouverts et protégés par fail2ban ; SPICE (`3128`) filtré, accessible depuis `vmbr1`.

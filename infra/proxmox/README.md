@@ -19,7 +19,7 @@ Configuration de l'hôte OVH `ns3092722` (Proxmox VE 9, Debian 13) qui héberge 
 | Réseau | `vmbr0` sur `eno1` (IP publique `54.36.121.105`, IPv6 `2001:41d0:203:1c69::1`), `vmbr1` interne `192.168.100.1/24` sans port physique | `network` |
 | Pare-feu | NAT de `192.168.100.0/24` vers Internet ; `22` et `8006` ouverts sur l'IP publique ; `3128` (SPICE) filtré sur l'IP publique | `firewall` |
 | fail2ban | Jails `sshd` et `proxmox` (5 échecs / 10 min = 1 h de ban), tailnet et `vmbr1` en liste blanche | `fail2ban` |
-| Tailscale | Désinstallé de l'hôte (administration par l'IP publique) ; réactivable avec `host_tailscale_enabled: true` | `tailscale` |
+| NetBird | Client NetBird (`ns3092722.netbird.cloud`, `100.106.21.10`) relié à app.netbird.io avec une clé d'installation | `netbird` |
 | Supervision | node_exporter écoute uniquement sur `192.168.100.1:9100` (scrapé par Prometheus) | `monitoring` |
 | Stockage | Pool ZFS `data` (miroir NVMe) : `data/zd0` → `/var/lib/vz` (stockage `local`), `data/backups` → `/var/lib/vz/backups` (stockage `backups`, 2 sauvegardes gardées) | `storage` |
 | Accès Proxmox | Groupe `Admins` (evan, lucas, sarah @pve) avec le rôle `Administrator` sur `/` | `pve_access` |
@@ -93,7 +93,7 @@ reporter dans `ansible/group_vars/all.yml` pour que le playbook reste fidèle.
    cp infra/proxmox/ansible/inventory.example.ini infra/proxmox/ansible/inventory.ini
    ```
 
-   puis créer `secrets.yml` (voir ci-dessus) avec une clé d'authentification Tailscale neuve.
+   puis créer `secrets.yml` (voir ci-dessus) avec une clé d'installation NetBird.
 3. **Vérifier ce qui va changer**, puis appliquer :
 
    ```bash
