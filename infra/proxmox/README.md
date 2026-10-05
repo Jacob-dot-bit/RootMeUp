@@ -18,7 +18,7 @@ Configuration de l'hôte OVH `ns3092722` (Proxmox VE 9, Debian 13) qui héberge 
 | Dépôts, paquets | `pve-no-subscription`, dépôt entreprise désactivé, iptables-persistent, fail2ban, node_exporter, unattended-upgrades | `base` |
 | Réseau | `vmbr0` sur `eno1` (IP publique `54.36.121.105`, IPv6 `2001:41d0:203:1c69::1`), `vmbr1` interne `192.168.100.1/24` sans port physique | `network` |
 | Pare-feu | NAT de `192.168.100.0/24` vers Internet ; `22` et `8006` ouverts sur l'IP publique ; `3128` (SPICE) filtré sur l'IP publique | `firewall` |
-| fail2ban | Jails `sshd` et `proxmox` (5 échecs / 10 min = 1 h de ban), tailnet et `vmbr1` en liste blanche | `fail2ban` |
+| fail2ban | Jails `sshd` et `proxmox` (5 échecs / 10 min = 1 h de ban), réseau NetBird et `vmbr1` en liste blanche | `fail2ban` |
 | NetBird | Client NetBird (`ns3092722.netbird.cloud`, `100.106.21.10`) relié à app.netbird.io avec une clé d'installation | `netbird` |
 | Supervision | node_exporter écoute uniquement sur `192.168.100.1:9100` (scrapé par Prometheus) | `monitoring` |
 | Stockage | Pool ZFS `data` (miroir NVMe) : `data/zd0` → `/var/lib/vz` (stockage `local`), `data/backups` → `/var/lib/vz/backups` (stockage `backups`, 2 sauvegardes gardées) | `storage` |
@@ -28,14 +28,17 @@ Configuration de l'hôte OVH `ns3092722` (Proxmox VE 9, Debian 13) qui héberge 
 
 ## Ce qui est installé dans les VMs
 
+Pour tester les rôles sur une VM jetable hors NetBird (réseau `vmbr1`, via l'hôte) :
+`-e vm_netbird_enabled=false -e vm_admin_iface=eth0`.
+
 Deux options pour remettre les VMs : restaurer leurs archives vzdump (rôle `guests`, état
 exact de la dernière sauvegarde), ou les réinstaller sur une Debian 13 neuve avec les rôles
 ci-dessous puis réimporter les données.
 
 | VM | Contenu | Rôle Ansible |
 |---|---|---|
-| `grafana` (101) | Grafana + Prometheus (loopback), HTTPS via `tailscale serve`, datasource et dashboards de [`infra/grafana/dashboards`](../grafana/dashboards/), 6 règles d'alerte, routage Discord CTFd / Proxmox, battement healthchecks.io, tunnel SSH vers la base CTFd, pare-feu, fail2ban (sshd, grafana, recidive), auditd | `grafana_vm` |
-| `ctf-rootmeup` (100) | CTFd (venv + gunicorn) et plugin CTFdDockerContainersPlugin, MariaDB et Redis en loopback, nginx HTTPS (certificat `tailscale cert`), Docker, images des 7 challenges, cAdvisor, node_exporter, compte `tunnel`, sshd durci | `ctfd_vm` |
+| `grafana` (101) | Grafana + Prometheus (loopback), HTTPS par nginx (certificat autosigné), NetBird, datasource et dashboards de [`infra/grafana/dashboards`](../grafana/dashboards/), 6 règles d'alerte, routage Discord CTFd / Proxmox, battement healthchecks.io, tunnel SSH vers la base CTFd, pare-feu, fail2ban (sshd, grafana, recidive), auditd | `grafana_vm` |
+| `ctf-rootmeup` (100) | CTFd (venv + gunicorn) et plugin CTFdDockerContainersPlugin, MariaDB et Redis en loopback, nginx HTTPS (certificat autosigné), NetBird, Docker, images des 7 challenges, cAdvisor, node_exporter, compte `tunnel`, sshd durci | `ctfd_vm` |
 
 Les données ne sont pas dans le dépôt (comptes, scores, flags) : elles se sauvegardent avec
 `backup-data.sh` puis se réimportent en renseignant `ctfd_restore_from` et
@@ -123,10 +126,12 @@ Chaque rôle a son tag (`--tags firewall`, `--tags fail2ban`…) pour n'applique
   `/root/.ssh/authorized_keys`) avant d'appliquer le rôle `base`.
 - **Ports exposés hors administration** : `rpcbind` (`111`) et `postfix` (`25`) écoutent sur
   toutes les interfaces ; ils ne sont pas utilisés et peuvent être filtrés ou désactivés.
-- **Pare-feu de la VM CTFd** : la chaîne `ts-input` ajoutée par tailscaled accepte tout le
-  trafic du tailnet avant les règles du fichier ; les filtres par port (9100/8080 réservés à
-  Grafana) ne s'appliquent donc qu'en dehors de Tailscale. Avant ce relevé, ils visaient encore
-  l'ancienne IP de Grafana (`100.84.158.83`).
+- **NetBird sur les VMs** : le rôle `netbird` joint chaque VM au réseau avec la clé
+  d'installation de `secrets.yml` sous le nom `grafana` / `ctf-rootmeup`
+  (`<nom>.netbird.cloud`). NetBird ne délivrant pas de certificat, Grafana et CTFd sont servis
+  en HTTPS avec un certificat autosigné (avertissement du navigateur à accepter une fois).
+  Après la bascule, mettre à jour dans l'admin CTFd (*Containers*) l'adresse donnée aux joueurs
+  pour joindre leurs instances : l'IP NetBird de la VM CTF remplace `100.118.132.76`.
 - La VM Grafana a aussi un bureau GNOME installé, qui n'est pas repris par le rôle.
 - Appliquer le rôle `network` sur l'hôte en production recharge les interfaces : à faire
   avec la console KVM OVH à portée de main.
