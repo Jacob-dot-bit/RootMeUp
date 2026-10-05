@@ -1,0 +1,15 @@
+# {{ ansible_managed }}
+[DEFAULT]
+backend  = systemd
+bantime  = {{ fail2ban_bantime }}
+findtime = {{ fail2ban_findtime }}
+maxretry = {{ fail2ban_maxretry }}
+ignoreip = {{ fail2ban_ignoreip | join(' ') }}
+
+[sshd]
+enabled = true
+
+[proxmox]
+enabled  = true
+port     = https,http,8006
+filter   = proxmox

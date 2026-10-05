@@ -1,0 +1,26 @@
+# {{ ansible_managed }}
+*nat
+:PREROUTING ACCEPT [0:0]
+:INPUT ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+:POSTROUTING ACCEPT [0:0]
+# Accès Internet des VMs du réseau interne
+-A POSTROUTING -s {{ lan_cidr }} -o vmbr0 -j MASQUERADE
+COMMIT
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+{% for src in pve_api_allowed_hosts %}
+-A INPUT -s {{ src }} -p tcp -m tcp --dport 8006 -j ACCEPT
+{% endfor %}
+# Administration : ouverte via Tailscale et le réseau interne
+-A INPUT -i tailscale0 -p tcp -m multiport --dports {{ (admin_public_ports + admin_private_ports) | join(',') }} -j ACCEPT
+-A INPUT -i {{ lan_bridge }} -p tcp -m multiport --dports {{ (admin_public_ports + admin_private_ports) | join(',') }} -j ACCEPT
+# Sur l'IP publique : {{ admin_public_ports | join(', ') }} ouverts (protégés par fail2ban), le reste filtré
+{% if admin_private_ports %}
+-A INPUT -i vmbr0 -p tcp -m multiport --dports {{ admin_private_ports | join(',') }} -j DROP
+{% endif %}
+-A FORWARD -i {{ lan_bridge }} -o vmbr0 -j ACCEPT
+-A FORWARD -i vmbr0 -o {{ lan_bridge }} -m state --state RELATED,ESTABLISHED -j ACCEPT
+COMMIT

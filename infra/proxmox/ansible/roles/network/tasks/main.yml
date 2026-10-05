@@ -1,0 +1,7 @@
+- name: /etc/network/interfaces (vmbr0 public, vmbr1 réseau interne des VMs)
+  ansible.builtin.template:
+    src: interfaces.j2
+    dest: /etc/network/interfaces
+    mode: "0644"
+    backup: true
+  notify: Appliquer la configuration réseau

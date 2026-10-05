@@ -1,0 +1,19 @@
+- name: Filtre fail2ban pour l'authentification Proxmox (pvedaemon)
+  ansible.builtin.copy:
+    src: proxmox.conf
+    dest: /etc/fail2ban/filter.d/proxmox.conf
+    mode: "0644"
+  notify: Redémarrer fail2ban
+
+- name: Jails SSH et Proxmox
+  ansible.builtin.template:
+    src: rootmeup.local.j2
+    dest: /etc/fail2ban/jail.d/rootmeup.local
+    mode: "0644"
+  notify: Redémarrer fail2ban
+
+- name: fail2ban actif au démarrage
+  ansible.builtin.service:
+    name: fail2ban
+    state: started
+    enabled: true

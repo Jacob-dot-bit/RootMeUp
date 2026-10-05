@@ -1,0 +1,67 @@
+- name: Nom d'hôte
+  ansible.builtin.hostname:
+    name: "{{ pve_hostname }}"
+
+- name: /etc/hosts
+  ansible.builtin.template:
+    src: hosts.j2
+    dest: /etc/hosts
+    mode: "0644"
+
+- name: Dépôt Proxmox sans abonnement
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/proxmox.sources
+    mode: "0644"
+    content: |
+      Types: deb
+      URIs: http://download.proxmox.com/debian/pve
+      Suites: {{ ansible_distribution_release }}
+      Components: pve-no-subscription
+      Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+
+- name: Dépôt entreprise désactivé (pas de licence)
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/pve-enterprise.sources
+    mode: "0644"
+    content: |
+      # Types: deb
+      # URIs: https://enterprise.proxmox.com/debian/pve
+      # Suites: {{ ansible_distribution_release }}
+      # Components: pve-enterprise
+      # Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+
+- name: Paquets ajoutés à l'installation de base
+  ansible.builtin.apt:
+    name:
+      - iptables-persistent
+      - fail2ban
+      - python3-systemd
+      - prometheus-node-exporter
+      - unattended-upgrades
+      - curl
+      - lsof
+    state: present
+    update_cache: true
+
+- name: Mises à jour automatiques
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    mode: "0644"
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+
+- name: Routage IPv4 (NAT des VMs sur vmbr1)
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    sysctl_file: /etc/sysctl.d/99-ipforward.conf
+    reload: true
+
+- name: Authentification SSH par mot de passe
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/50-cloud-init.conf
+    mode: "0600"
+    content: "PasswordAuthentication {{ 'yes' if ssh_password_authentication else 'no' }}\n"
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Recharger sshd

@@ -1,0 +1,17 @@
+# Restaure chaque VM depuis son archive vzdump si elle n'existe pas encore.
+# Les archives doivent être copiées au préalable dans /var/lib/vz/backups/dump/
+# (voir README : elles ne sont pas versionnées, elles pèsent plusieurs Go).
+- name: VMs existantes
+  ansible.builtin.command: pvesh get /cluster/resources --type vm --output-format json
+  register: pve_vms
+  changed_when: false
+
+- name: Restauration des VMs absentes
+  ansible.builtin.command: >-
+    qmrestore /var/lib/vz/backups/dump/{{ item.archive }} {{ item.vmid }} --storage local
+  loop: "{{ guests }}"
+  loop_control:
+    label: "{{ item.vmid }} {{ item.name }}"
+  when:
+    - item.archive | length > 0
+    - item.vmid not in (pve_vms.stdout | from_json | map(attribute='vmid') | list)

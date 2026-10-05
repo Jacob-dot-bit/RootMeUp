@@ -1,0 +1,26 @@
+- name: Datasets ZFS existants
+  ansible.builtin.command: zfs list -H -o name
+  register: zfs_existing
+  changed_when: false
+
+# Un dataset n'est créé que s'il manque ; un /var/lib/vz non vide n'est jamais écrasé
+# (zfs create échoue si le point de montage contient déjà des fichiers).
+- name: Datasets ZFS (stockage des VMs et des sauvegardes)
+  ansible.builtin.command: "zfs create -o mountpoint={{ item.mountpoint }} {{ item.name }}"
+  loop: "{{ zfs_datasets }}"
+  when: item.name not in zfs_existing.stdout_lines
+
+- name: Stockages Proxmox déclarés
+  ansible.builtin.command: pvesh get /storage --output-format json
+  register: pvesm_existing
+  changed_when: false
+
+- name: Contenus du stockage local
+  ansible.builtin.command: >-
+    pvesm set local --content vztmpl,rootdir,iso,images,snippets --prune-backups keep-all=1
+  changed_when: false  # commande idempotente
+
+- name: Stockage des sauvegardes
+  ansible.builtin.command: >-
+    pvesm add dir backups --path /var/lib/vz/backups --content backup --prune-backups keep-last=2
+  when: "'backups' not in (pvesm_existing.stdout | from_json | map(attribute='storage') | list)"

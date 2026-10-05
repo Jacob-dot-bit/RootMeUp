@@ -1,0 +1,14 @@
+# node_exporter n'écoute que sur vmbr1 : scrapé par Prometheus (VM grafana), jamais exposé publiquement.
+- name: Adresse d'écoute de node_exporter
+  ansible.builtin.copy:
+    dest: /etc/default/prometheus-node-exporter
+    mode: "0644"
+    content: |
+      ARGS="--web.listen-address={{ node_exporter_listen }}"
+  notify: Redémarrer node_exporter
+
+- name: node_exporter actif au démarrage
+  ansible.builtin.service:
+    name: prometheus-node-exporter
+    state: started
+    enabled: true
