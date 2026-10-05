@@ -3,7 +3,7 @@
     name: netfilter-persistent
     state: restarted
 
-- name: Redémarrer tailscaled
+- name: Redémarrer netbird
   ansible.builtin.service:
-    name: tailscaled
+    name: netbird
     state: restarted

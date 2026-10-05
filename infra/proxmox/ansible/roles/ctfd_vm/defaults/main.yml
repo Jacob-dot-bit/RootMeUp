@@ -1,10 +1,9 @@
-# Version de CTFd déployée (tag git de https://github.com/CTFd/CTFd).
-# À relever sur la VM en place : sudo git -C /opt/CTFd describe --tags
-ctfd_version: ""
+# Version de CTFd déployée (tag git de https://github.com/CTFd/CTFd), relevée sur la VM.
+ctfd_version: "3.8.6"
 ctfd_dir: /opt/CTFd
 ctfd_plugin_repo: https://github.com/Bigyls/CTFdDockerContainersPlugin.git
-ctfd_plugin_version: master
-ctfd_domain: ctf-rootmeup.tail8588a8.ts.net
+ctfd_plugin_version: dc9372c
+ctfd_domain: ctf-rootmeup.netbird.cloud
 
 challenges_repo: https://github.com/Jacob-dot-bit/RootMeUp.git
 challenges_dir: /srv/ctf-challenges/RootMeUp
@@ -24,7 +23,11 @@ ssh_allowed_users: [sjoyas, lucas, jakub, evan]
 # Clé publique du compte `tunnel` (tunnel MySQL ouvert par la VM Grafana).
 tunnel_public_key: ""
 
-cadvisor_image: gcr.io/cadvisor/cadvisor:v0.49.1
+# Adresse d'écoute des services exposés (nginx, ports des instances, cAdvisor) :
+# l'IP NetBird relevée par le rôle netbird, sinon toutes les interfaces.
+vm_vpn_ip: 0.0.0.0
+
+cadvisor_image: gcr.io/cadvisor/cadvisor:latest
 
 # Restauration des données : dossier local produit par infra/vms/backup-data.sh.
 # Vide = installation à blanc (CTFd affichera /setup).

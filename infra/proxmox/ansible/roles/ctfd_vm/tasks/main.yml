@@ -1,11 +1,6 @@
 # VM CTFd : CTFd (venv + gunicorn) derrière nginx en HTTPS, MariaDB, Redis, Docker pour
-# les instances de challenges. Prérequis : Debian 13 installée (partitionnement LVM CIS),
-# comptes SSH des administrateurs et Tailscale opérationnels.
-
-- name: Version de CTFd renseignée
-  ansible.builtin.assert:
-    that: ctfd_version | length > 0
-    fail_msg: "Renseigner ctfd_version (sudo git -C /opt/CTFd describe --tags sur l'ancienne VM)."
+# les instances de challenges. Prérequis : Debian 13 installée (partitionnement LVM CIS) et
+# comptes SSH des administrateurs ; NetBird est installé par le rôle netbird.
 
 - name: Dépôt Docker
   ansible.builtin.get_url:
@@ -68,12 +63,19 @@
     groups: _ssh
     append: true
 
-- name: Clé autorisée du tunnel
+- name: Clé autorisée du tunnel (redirection vers MariaDB uniquement)
   ansible.posix.authorized_key:
     user: tunnel
     key: "{{ tunnel_public_key }}"
-    key_options: 'permitopen="127.0.0.1:3306",no-pty,no-X11-forwarding,no-agent-forwarding'
+    key_options: 'restrict,port-forwarding,permitopen="127.0.0.1:3306"'
   when: tunnel_public_key | length > 0
+
+- name: Compte tunnel autorisé par sshd
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/50-grafana-tunnel.conf
+    content: "AllowUsers tunnel\n"
+    mode: "0600"
+  notify: Recharger sshd
 
 # --- SSH --------------------------------------------------------------------
 - name: sshd durci (clé uniquement, root interdit, liste blanche)
@@ -130,6 +132,9 @@
     repo: https://github.com/CTFd/CTFd.git
     dest: "{{ ctfd_dir }}"
     version: "{{ ctfd_version }}"
+    # config.ini est modifié localement : on ne touche plus à un clone existant.
+    # Pour changer de version : ctfd_update=true (après sauvegarde).
+    update: "{{ ctfd_update | default(false) }}"
     force: false
   become_user: ctfd
   notify: Redémarrer ctfd
@@ -139,6 +144,7 @@
     repo: "{{ ctfd_plugin_repo }}"
     dest: "{{ ctfd_dir }}/CTFd/plugins/containers"
     version: "{{ ctfd_plugin_version }}"
+    update: "{{ ctfd_update | default(false) }}"
   become_user: ctfd
   notify: Redémarrer ctfd
 
@@ -156,32 +162,41 @@
   become_user: ctfd
   failed_when: false  # le plugin n'a pas toujours de requirements.txt
 
-- name: Configuration CTFd (BDD, Redis)
+- name: Réglages de session dans config.ini
   community.general.ini_file:
     path: "{{ ctfd_dir }}/CTFd/config.ini"
     section: server
-    option: "{{ item.option }}"
+    option: "{{ item.key }}"
     value: "{{ item.value }}"
     owner: ctfd
     group: ctfd
-    mode: "0600"
-  loop:
-    - { option: DATABASE_URL, value: "mysql+pymysql://ctfd:{{ ctfd_db_password }}@localhost/ctfd" }
-    - { option: REDIS_URL, value: "redis://localhost:6379" }
-  loop_control:
-    label: "{{ item.option }}"
+    mode: "0640"
+  loop: "{{ {'SESSION_COOKIE_HTTPONLY': 'true', 'SESSION_COOKIE_SAMESITE': 'Lax', 'PERMANENT_SESSION_LIFETIME': '604800'} | dict2items }}"
+  notify: Redémarrer ctfd
+
+- name: Dossier de l'environnement CTFd
+  ansible.builtin.file:
+    path: /etc/ctfd
+    state: directory
+    mode: "0755"
+
+- name: Environnement CTFd (clé secrète, BDD, Redis, proxy)
+  ansible.builtin.template:
+    src: ctfd.env.j2
+    dest: /etc/ctfd/ctfd.env
+    owner: root
+    group: ctfd
+    mode: "0640"
   no_log: true
   notify: Redémarrer ctfd
 
-- name: Clé secrète CTFd (identique à l'ancienne pour garder les sessions et jetons valides)
-  ansible.builtin.copy:
-    dest: "{{ ctfd_dir }}/.ctfd_secret_key"
-    content: "{{ ctfd_secret_key }}"
+- name: Dossier des fichiers déposés
+  ansible.builtin.file:
+    path: /var/lib/ctfd/uploads
+    state: directory
     owner: ctfd
     group: ctfd
-    mode: "0600"
-  no_log: true
-  notify: Redémarrer ctfd
+    mode: "0755"
 
 - name: Dossier des logs CTFd
   ansible.builtin.file:
@@ -202,12 +217,18 @@
   ansible.builtin.include_tasks: restore.yml
   when: ctfd_restore_from | length > 0
 
+# Au tout premier démarrage, la création du schéma peut échouer une fois
+# (« Table definition has changed ») : on réessaie.
 - name: CTFd actif au démarrage
   ansible.builtin.systemd_service:
     name: ctfd
     state: started
     enabled: true
     daemon_reload: true
+  register: ctfd_start
+  retries: 3
+  delay: 10
+  until: ctfd_start is succeeded
 
 # --- nginx + HTTPS ------------------------------------------------------------
 - name: Dossier des certificats
@@ -216,12 +237,14 @@
     state: directory
     mode: "0700"
 
-- name: Certificat Let's Encrypt du tailnet
+- name: Certificat autosigné (NetBird ne délivre pas de certificat)
   ansible.builtin.command: >-
-    tailscale cert --cert-file /etc/nginx/certs/ctfd.crt
-    --key-file /etc/nginx/certs/ctfd.key {{ ctfd_domain }}
+    openssl req -x509 -nodes -newkey rsa:4096 -days 825 -subj /CN={{ ctfd_domain }}
+    -addext "subjectAltName=DNS:{{ ctfd_domain }}"
+    -keyout /etc/nginx/certs/ctfd.key -out /etc/nginx/certs/ctfd.crt
   args:
     creates: /etc/nginx/certs/ctfd.crt
+  notify: Recharger nginx
 
 - name: Site nginx (HTTP -> HTTPS, reverse proxy vers gunicorn)
   ansible.builtin.template:
@@ -244,13 +267,13 @@
   notify: Recharger nginx
 
 # --- Docker et challenges ---------------------------------------------------
-- name: Démon Docker (écoute des ports publiés sur l'IP tailnet, logs bornés)
+- name: Démon Docker (ports des instances publiés sur l'IP NetBird, logs bornés)
   ansible.builtin.copy:
     dest: /etc/docker/daemon.json
     mode: "0644"
     content: |
       {
-        "ip": "{{ ctf_vm_tailnet_ip }}",
+        "ip": "{{ vm_vpn_ip }}",
         "log-driver": "json-file",
         "log-opts": { "max-size": "10m", "max-file": "3" }
       }
@@ -280,6 +303,9 @@
     tag: "{{ item.tag.split(':')[1] }}"
     path: "{{ challenges_dir }}/challenges/{{ item.dir }}"
     rebuild: "{{ 'always' if challenges_git.changed else 'never' }}"
+  # Builds longs : sshd coupe les sessions inactives après 5 min (ClientAliveCountMax 0).
+  async: 3600
+  poll: 20
   loop: "{{ challenge_images }}"
   loop_control:
     label: "{{ item.tag }}"
@@ -289,15 +315,12 @@
     name: cadvisor
     image: "{{ cadvisor_image }}"
     restart_policy: unless-stopped
-    privileged: true
-    devices: [/dev/kmsg]
-    published_ports: ["{{ ctf_vm_tailnet_ip }}:8080:8080"]
+    published_ports: ["{{ vm_vpn_ip }}:8080:8080"]
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
-      - /dev/disk/:/dev/disk:ro
 
 # --- Supervision et durcissement ---------------------------------------------
 - name: node_exporter
@@ -306,6 +329,61 @@
     mode: "0644"
     content: 'ARGS="--web.listen-address=0.0.0.0:9100"'
   notify: Redémarrer node_exporter
+
+- name: Pare-feu (liste blanche, accès via NetBird ; chaînes Docker et NETBIRD-* ajoutées par les démons)
+  ansible.builtin.template:
+    src: rules.v4.j2
+    dest: /etc/iptables/rules.v4
+    mode: "0640"
+  notify: Recharger le pare-feu
+
+- name: Paramètres noyau (CIS, routage Docker)
+  ansible.builtin.copy:
+    src: sysctl/
+    dest: /etc/sysctl.d/
+    mode: "0644"
+  notify: Recharger sysctl
+
+- name: Filtre fail2ban CTFd (échecs de connexion)
+  ansible.builtin.copy:
+    src: fail2ban-ctfd.conf
+    dest: /etc/fail2ban/filter.d/ctfd.conf
+    mode: "0644"
+  notify: Redémarrer fail2ban
+
+- name: Jails fail2ban (sshd, ctfd, mysqld-auth, recidive)
+  ansible.builtin.copy:
+    src: fail2ban-jails.conf
+    dest: /etc/fail2ban/jail.d/rootmeup.conf
+    mode: "0644"
+  notify: Redémarrer fail2ban
+
+- name: Règles auditd (CIS)
+  ansible.builtin.copy:
+    src: "audit/{{ item }}"
+    dest: "/etc/audit/rules.d/{{ item }}"
+    mode: "0640"
+  loop: [50-cis.rules, audit.rules]
+  notify: Recharger auditd
+
+- name: Politique de mots de passe
+  ansible.builtin.copy:
+    src: pwquality.conf
+    dest: /etc/security/pwquality.conf
+    mode: "0644"
+
+- name: Journalisation de sudo (CIS)
+  ansible.builtin.copy:
+    src: sudoers-00-cis
+    dest: /etc/sudoers.d/00-cis
+    mode: "0440"
+    validate: visudo -cf %s
+
+- name: Bannière légale SSH
+  ansible.builtin.copy:
+    src: issue.net
+    dest: /etc/issue.net
+    mode: "0644"
 
 - name: Services de sécurité actifs
   ansible.builtin.service:

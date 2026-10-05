@@ -20,7 +20,7 @@
 - name: Fichiers déposés (pièces jointes des challenges)
   ansible.builtin.unarchive:
     src: "{{ ctfd_restore_from }}/ctfd-uploads.tar.gz"
-    dest: "{{ ctfd_dir }}/CTFd/"
+    dest: /var/lib/ctfd/
     owner: ctfd
     group: ctfd
 

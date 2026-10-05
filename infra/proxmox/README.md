@@ -18,8 +18,8 @@ Configuration de l'hôte OVH `ns3092722` (Proxmox VE 9, Debian 13) qui héberge 
 | Dépôts, paquets | `pve-no-subscription`, dépôt entreprise désactivé, iptables-persistent, fail2ban, node_exporter, unattended-upgrades | `base` |
 | Réseau | `vmbr0` sur `eno1` (IP publique `54.36.121.105`, IPv6 `2001:41d0:203:1c69::1`), `vmbr1` interne `192.168.100.1/24` sans port physique | `network` |
 | Pare-feu | NAT de `192.168.100.0/24` vers Internet ; `22` et `8006` ouverts sur l'IP publique ; `3128` (SPICE) filtré sur l'IP publique | `firewall` |
-| fail2ban | Jails `sshd` et `proxmox` (5 échecs / 10 min = 1 h de ban), tailnet et `vmbr1` en liste blanche | `fail2ban` |
-| Tailscale | Nœud `ns3092722` du tailnet `tail8588a8`, Tailscale SSH activé | `tailscale` |
+| fail2ban | Jails `sshd` et `proxmox` (5 échecs / 10 min = 1 h de ban), réseau NetBird et `vmbr1` en liste blanche | `fail2ban` |
+| NetBird | Client NetBird (`ns3092722.netbird.cloud`, `100.106.21.10`) relié à app.netbird.io avec une clé d'installation | `netbird` |
 | Supervision | node_exporter écoute uniquement sur `192.168.100.1:9100` (scrapé par Prometheus) | `monitoring` |
 | Stockage | Pool ZFS `data` (miroir NVMe) : `data/zd0` → `/var/lib/vz` (stockage `local`), `data/backups` → `/var/lib/vz/backups` (stockage `backups`, 2 sauvegardes gardées) | `storage` |
 | Accès Proxmox | Groupe `Admins` (evan, lucas, sarah @pve) avec le rôle `Administrator` sur `/` | `pve_access` |
@@ -28,14 +28,17 @@ Configuration de l'hôte OVH `ns3092722` (Proxmox VE 9, Debian 13) qui héberge 
 
 ## Ce qui est installé dans les VMs
 
+Pour tester les rôles sur une VM jetable hors NetBird (réseau `vmbr1`, via l'hôte) :
+`-e vm_netbird_enabled=false -e vm_admin_iface=eth0`.
+
 Deux options pour remettre les VMs : restaurer leurs archives vzdump (rôle `guests`, état
 exact de la dernière sauvegarde), ou les réinstaller sur une Debian 13 neuve avec les rôles
 ci-dessous puis réimporter les données.
 
 | VM | Contenu | Rôle Ansible |
 |---|---|---|
-| `grafana` (101) | Grafana + Prometheus (loopback), HTTPS via `tailscale serve`, datasource et dashboards de [`infra/grafana/dashboards`](../grafana/dashboards/), 6 règles d'alerte, routage Discord CTFd / Proxmox, battement healthchecks.io, tunnel SSH vers la base CTFd, pare-feu, fail2ban (sshd, grafana, recidive), auditd | `grafana_vm` |
-| `ctf-rootmeup` (100) | CTFd (venv + gunicorn) et plugin CTFdDockerContainersPlugin, MariaDB et Redis en loopback, nginx HTTPS (certificat `tailscale cert`), Docker, images des 7 challenges, cAdvisor, node_exporter, compte `tunnel`, sshd durci | `ctfd_vm` |
+| `grafana` (101) | Grafana + Prometheus (loopback), HTTPS par nginx (certificat autosigné), NetBird, datasource et dashboards de [`infra/grafana/dashboards`](../grafana/dashboards/), 6 règles d'alerte, routage Discord CTFd / Proxmox, battement healthchecks.io, tunnel SSH vers la base CTFd, pare-feu, fail2ban (sshd, grafana, recidive), auditd | `grafana_vm` |
+| `ctf-rootmeup` (100) | CTFd (venv + gunicorn) et plugin CTFdDockerContainersPlugin, MariaDB et Redis en loopback, nginx HTTPS (certificat autosigné), NetBird, Docker, images des 7 challenges, cAdvisor, node_exporter, compte `tunnel`, sshd durci | `ctfd_vm` |
 
 Les données ne sont pas dans le dépôt (comptes, scores, flags) : elles se sauvegardent avec
 `backup-data.sh` puis se réimportent en renseignant `ctfd_restore_from` et
@@ -69,10 +72,10 @@ ansible-vault encrypt ansible/secrets.yml
 
 ## Mettre à jour l'export
 
-Depuis une machine du tailnet (ou via l'IP publique) :
+Depuis un poste dont la clé SSH est autorisée pour root :
 
 ```bash
-./infra/proxmox/export.sh root@ns3092722.tail8588a8.ts.net
+./infra/proxmox/export.sh root@54.36.121.105
 ```
 
 Relire le diff de `host-config/` puis committer. Si une valeur a changé sur l'hôte, la
@@ -93,7 +96,7 @@ reporter dans `ansible/group_vars/all.yml` pour que le playbook reste fidèle.
    cp infra/proxmox/ansible/inventory.example.ini infra/proxmox/ansible/inventory.ini
    ```
 
-   puis créer `secrets.yml` (voir ci-dessus) avec une clé d'authentification Tailscale neuve.
+   puis créer `secrets.yml` (voir ci-dessus) avec une clé d'installation NetBird.
 3. **Vérifier ce qui va changer**, puis appliquer :
 
    ```bash
@@ -123,10 +126,12 @@ Chaque rôle a son tag (`--tags firewall`, `--tags fail2ban`…) pour n'applique
   `/root/.ssh/authorized_keys`) avant d'appliquer le rôle `base`.
 - **Ports exposés hors administration** : `rpcbind` (`111`) et `postfix` (`25`) écoutent sur
   toutes les interfaces ; ils ne sont pas utilisés et peuvent être filtrés ou désactivés.
-- **Rôle `ctfd_vm` partiellement reconstruit** : le service `ctfd`, le site nginx, la config
-  Docker, MariaDB et sshd sont relevés sur la VM. La version de CTFd (`ctfd_version`), la
-  config exacte du compte `tunnel`, le pare-feu, les jails fail2ban et les règles auditd de la
-  VM CTFd n'ont pas pu être lus (droits root requis) et restent à compléter.
+- **NetBird sur les VMs** : le rôle `netbird` joint chaque VM au réseau avec la clé
+  d'installation de `secrets.yml` sous le nom `grafana` / `ctf-rootmeup`
+  (`<nom>.netbird.cloud`). NetBird ne délivrant pas de certificat, Grafana et CTFd sont servis
+  en HTTPS avec un certificat autosigné (avertissement du navigateur à accepter une fois).
+  Après la bascule, mettre à jour dans l'admin CTFd (*Containers*) l'adresse donnée aux joueurs
+  pour joindre leurs instances : l'IP NetBird de la VM CTF remplace `100.118.132.76`.
 - La VM Grafana a aussi un bureau GNOME installé, qui n'est pas repris par le rôle.
 - Appliquer le rôle `network` sur l'hôte en production recharge les interfaces : à faire
   avec la console KVM OVH à portée de main.

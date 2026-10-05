@@ -30,8 +30,13 @@ iface vmbr0 inet6 static
 
 auto vmbr1
 iface vmbr1 inet static
-	address 192.168.100.1/24
-	bridge-ports none
-	bridge-fd 0
+        address 192.168.100.1/24
+        bridge-ports none
+        bridge-stp off
+        bridge-fd 0
+        post-up   iptables -t nat -A POSTROUTING -s '192.168.100.0/24' -o vmbr0 -j MASQUERADE
+        post-down iptables -t nat -D POSTROUTING -s '192.168.100.0/24' -o vmbr0 -j MASQUERADE
+        post-up   iptables -t raw -I PREROUTING -i fwbr+ -j CT --zone 1
+        post-down iptables -t raw -D PREROUTING -i fwbr+ -j CT --zone 1
 
 source /etc/network/interfaces.d/*

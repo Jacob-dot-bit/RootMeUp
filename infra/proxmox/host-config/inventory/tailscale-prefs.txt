@@ -1,4 +1,0 @@
-	"ExitNodeID": "",
-	"RunSSH": true,
-	"AdvertiseRoutes": null,
-	"NetfilterMode": 2,

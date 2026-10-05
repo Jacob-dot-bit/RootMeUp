@@ -1,16 +1,33 @@
 # {{ ansible_managed }}
 [Unit]
-Description=CTFd (gunicorn)
-After=network.target mariadb.service redis-server.service
-Requires=mariadb.service redis-server.service
+Description=CTFd
+Documentation=https://docs.ctfd.io
+After=network-online.target mariadb.service redis-server.service docker.service
+Wants=network-online.target
+Requires=mariadb.service redis-server.service docker.service
 
 [Service]
+Type=notify
 User=ctfd
 Group=ctfd
 WorkingDirectory={{ ctfd_dir }}
-ExecStart={{ ctfd_dir }}/.venv/bin/gunicorn "CTFd:create_app()" --bind 127.0.0.1:8000 --workers 1 --worker-class gevent --worker-tmp-dir /dev/shm --access-logfile /var/log/ctfd/access.log --error-logfile /var/log/ctfd/error.log
+EnvironmentFile=/etc/ctfd/ctfd.env
+ExecStartPre={{ ctfd_dir }}/.venv/bin/flask db upgrade
+ExecStart={{ ctfd_dir }}/.venv/bin/gunicorn "CTFd:create_app()" \
+    --bind 127.0.0.1:8000 \
+    --workers 1 \
+    --worker-class gevent \
+    --worker-tmp-dir /dev/shm \
+    --access-logfile /var/log/ctfd/access.log \
+    --error-logfile /var/log/ctfd/error.log
 Restart=always
 RestartSec=5
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=full
+ProtectHome=yes
+ReadWritePaths=/var/log/ctfd /var/lib/ctfd
 
 [Install]
 WantedBy=multi-user.target

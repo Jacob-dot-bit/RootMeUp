@@ -2,7 +2,7 @@
 Include /etc/ssh/sshd_config.d/*.conf
 Port 22
 LogLevel INFO
-AllowUsers {{ (ssh_allowed_users + ['tunnel']) | join(' ') }}
+AllowUsers {{ ssh_allowed_users | join(' ') }}
 AllowGroups _ssh
 LoginGraceTime 60
 PermitRootLogin no
@@ -22,9 +22,3 @@ Banner /etc/issue.net
 AcceptEnv LANG LC_* COLORTERM NO_COLOR
 Subsystem	sftp	/usr/lib/openssh/sftp-server
 
-Match User tunnel
-	AllowTcpForwarding local
-	PermitOpen 127.0.0.1:3306
-	X11Forwarding no
-	PermitTTY no
-	ForceCommand /usr/sbin/nologin

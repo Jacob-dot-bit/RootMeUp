@@ -99,6 +99,7 @@ nano
 ncurses-base
 ncurses-bin
 netbase
+netbird
 open-iscsi
 openssh-server
 openssl
@@ -121,7 +122,6 @@ sqv
 ssh-import-id
 sudo
 sysvinit-utils
-tailscale
 tailscale-archive-keyring
 tar
 tcpdump

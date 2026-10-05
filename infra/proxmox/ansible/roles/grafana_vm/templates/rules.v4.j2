@@ -1,14 +1,15 @@
 # {{ ansible_managed }}
-# Les chaînes ts-* sont ajoutées par tailscaled à son démarrage.
+# Les chaînes NETBIRD-* sont ajoutées par le démon netbird à son démarrage.
 *filter
 :INPUT DROP [0:0]
 :FORWARD DROP [0:0]
 :OUTPUT ACCEPT [0:0]
 -A INPUT -i lo -j ACCEPT
 -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
--A INPUT -i tailscale0 -p tcp -m tcp --dport 22 -j ACCEPT
--A INPUT -i tailscale0 -p tcp -m tcp --dport 3000 -j ACCEPT
--A INPUT -i tailscale0 -p tcp -m tcp --dport 9090 -j ACCEPT
--A INPUT -p udp -m udp --dport 41641 -j ACCEPT
+-A INPUT -i {{ vm_admin_iface }} -p tcp -m tcp --dport 22 -j ACCEPT
+-A INPUT -i {{ vm_admin_iface }} -p tcp -m tcp --dport 80 -j ACCEPT
+-A INPUT -i {{ vm_admin_iface }} -p tcp -m tcp --dport 443 -j ACCEPT
+# WireGuard de NetBird
+-A INPUT -p udp -m udp --dport 51820 -j ACCEPT
 -A INPUT -p icmp -j ACCEPT
 COMMIT

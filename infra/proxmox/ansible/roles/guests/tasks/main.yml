@@ -5,6 +5,7 @@
   ansible.builtin.command: pvesh get /cluster/resources --type vm --output-format json
   register: pve_vms
   changed_when: false
+  check_mode: false
 
 - name: Restauration des VMs absentes
   ansible.builtin.command: >-

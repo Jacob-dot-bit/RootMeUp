@@ -18,6 +18,7 @@ lxc.service
 lxcfs.service
 netavark-dhcp-proxy.service
 netavark-firewalld-reload.service
+netbird.service
 netfilter-persistent.service
 networking.service
 nfs-blkmap.service
@@ -53,7 +54,6 @@ spiceproxy.service
 ssh.service
 sshd-keygen.service
 systemd-pstore.service
-tailscaled.service
 unattended-upgrades.service
 zfs-import-cache.service
 zfs-import-scan.service

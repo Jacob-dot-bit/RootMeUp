@@ -19,14 +19,14 @@ lan_cidr: 192.168.100.0/24
 # --- Pare-feu -------------------------------------------------------------
 # Ports d'administration ouverts sur l'IP publique (interface web et SSH).
 admin_public_ports: [22, 8006]
-# Ports filtrés sur l'IP publique, accessibles via Tailscale et vmbr1 uniquement.
+# Ports filtrés sur l'IP publique, accessibles via NetBird et vmbr1 uniquement.
 admin_private_ports: [3128]
 # Hôtes autorisés explicitement sur l'interface web, quelle que soit l'interface (VM CTFd).
 pve_api_allowed_hosts: [100.118.132.76/32]
 
 # --- SSH ------------------------------------------------------------------
-# Connexion SSH par clé uniquement (root inclus). Tailscale SSH et la console KVM OVH restent
-# disponibles en secours.
+# Connexion SSH par clé uniquement (root inclus). La console KVM OVH reste disponible
+# en secours.
 ssh_password_authentication: false
 
 # --- fail2ban -------------------------------------------------------------
@@ -36,12 +36,16 @@ fail2ban_maxretry: 5
 fail2ban_ignoreip:
   - 127.0.0.1/8
   - ::1
-  - 100.64.0.0/10
-  - fd7a:115c:a1e0::/48
+  - "{{ netbird_cidr }}"
+  - "{{ netbird_cidr6 }}"
   - "{{ lan_cidr }}"
 
-# --- Tailscale ------------------------------------------------------------
-tailscale_ssh: true
+# --- NetBird ---------------------------------------------------------------
+# L'équipe est passée de Tailscale à NetBird (05/10/2026). L'hôte est joignable sur
+# 100.106.21.10 (ns3092722.netbird.cloud) en plus de son IP publique.
+netbird_management_url: https://api.netbird.io:443
+netbird_cidr: 100.106.0.0/16
+netbird_cidr6: fd00:fbfe:512d:7014::/64
 
 # --- Supervision ----------------------------------------------------------
 node_exporter_listen: "192.168.100.1:9100"
@@ -74,5 +78,10 @@ guests:
   - { vmid: 101, name: grafana, archive: "" }
 
 # --- VMs ------------------------------------------------------------------
-grafana_domain: grafana.tail8588a8.ts.net
-ctf_vm_tailnet_ip: 100.118.132.76
+# Les VMs sont jointes via NetBird (noms <machine>.netbird.cloud). NetBird ne fournit pas
+# de certificat : Grafana et CTFd sont servis par nginx avec un certificat autosigné.
+grafana_domain: grafana.netbird.cloud
+ctf_vm_address: ctf-rootmeup.netbird.cloud
+# Interface d'administration des VMs (SSH, HTTPS). Surchargée (eth0) pour un test sur une
+# VM hors NetBird (voir README).
+vm_admin_iface: wt0
