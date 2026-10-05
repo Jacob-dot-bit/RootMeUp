@@ -38,6 +38,9 @@ mkdir -p "$DEST"
 # Fichiers de la liste blanche (ceux absents sur l'hôte sont ignorés).
 ssh "$TARGET" "tar -cf - --ignore-failed-read ${FILES[*]} 2>/dev/null" | tar -xf - -C "$DEST"
 
+# Compteurs de paquets et horodatages retirés pour que le diff git ne montre que les vrais changements.
+sed -i -e 's/\[[0-9]*:[0-9]*\]/[0:0]/' -e '/^# \(Generated\|Completed\)/d' "$DEST"/etc/iptables/rules.v*
+
 # Configurations des VMs et conteneurs (sans les sections [snapshot], propres à l'hôte).
 mkdir -p "$DEST/etc/pve/qemu-server" "$DEST/etc/pve/lxc"
 for kind in qemu-server lxc; do
