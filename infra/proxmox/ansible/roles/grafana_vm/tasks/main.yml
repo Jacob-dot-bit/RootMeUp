@@ -133,6 +133,7 @@
 - name: HTTPS via tailscale serve (certificat Let's Encrypt du tailnet)
   ansible.builtin.command: tailscale serve --bg --https=443 http://127.0.0.1:3000
   changed_when: false  # commande idempotente
+  when: vm_tailscale_enabled | bool
 
 # --- Dead man's switch -------------------------------------------------------
 - name: Unités du battement healthchecks.io

@@ -233,6 +233,15 @@
     --key-file /etc/nginx/certs/ctfd.key {{ ctfd_domain }}
   args:
     creates: /etc/nginx/certs/ctfd.crt
+  when: vm_tailscale_enabled | bool
+
+- name: Certificat autosigné (VM hors tailnet)
+  ansible.builtin.command: >-
+    openssl req -x509 -nodes -newkey rsa:2048 -days 365 -subj /CN={{ ctfd_domain }}
+    -keyout /etc/nginx/certs/ctfd.key -out /etc/nginx/certs/ctfd.crt
+  args:
+    creates: /etc/nginx/certs/ctfd.crt
+  when: not (vm_tailscale_enabled | bool)
 
 - name: Site nginx (HTTP -> HTTPS, reverse proxy vers gunicorn)
   ansible.builtin.template:
