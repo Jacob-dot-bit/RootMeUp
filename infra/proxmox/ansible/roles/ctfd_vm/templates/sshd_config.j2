@@ -1,0 +1,30 @@
+# {{ ansible_managed }}
+Include /etc/ssh/sshd_config.d/*.conf
+Port 22
+LogLevel INFO
+AllowUsers {{ (ssh_allowed_users + ['tunnel']) | join(' ') }}
+AllowGroups _ssh
+LoginGraceTime 60
+PermitRootLogin no
+MaxAuthTries 3
+MaxSessions 5
+PubkeyAuthentication yes
+AuthorizedKeysFile	.ssh/authorized_keys .ssh/authorized_keys2
+PasswordAuthentication no
+PermitEmptyPasswords no
+KbdInteractiveAuthentication no
+UsePAM yes
+X11Forwarding yes
+PrintMotd no
+ClientAliveInterval 300
+ClientAliveCountMax 0
+Banner /etc/issue.net
+AcceptEnv LANG LC_* COLORTERM NO_COLOR
+Subsystem	sftp	/usr/lib/openssh/sftp-server
+
+Match User tunnel
+	AllowTcpForwarding local
+	PermitOpen 127.0.0.1:3306
+	X11Forwarding no
+	PermitTTY no
+	ForceCommand /usr/sbin/nologin

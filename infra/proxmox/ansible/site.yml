@@ -23,3 +23,9 @@
   become: true
   roles:
     - { role: grafana_vm, tags: [grafana_vm] }
+
+- name: VM CTFd (plateforme + instances de challenges)
+  hosts: ctfd
+  become: true
+  roles:
+    - { role: ctfd_vm, tags: [ctfd_vm] }

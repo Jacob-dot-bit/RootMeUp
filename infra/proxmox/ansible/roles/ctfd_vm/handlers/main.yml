@@ -1,0 +1,17 @@
+- name: Recharger sshd
+  ansible.builtin.service: { name: ssh, state: reloaded }
+
+- name: Redémarrer mariadb
+  ansible.builtin.service: { name: mariadb, state: restarted }
+
+- name: Redémarrer ctfd
+  ansible.builtin.systemd_service: { name: ctfd, state: restarted, daemon_reload: true }
+
+- name: Recharger nginx
+  ansible.builtin.service: { name: nginx, state: reloaded }
+
+- name: Redémarrer docker
+  ansible.builtin.service: { name: docker, state: restarted }
+
+- name: Redémarrer node_exporter
+  ansible.builtin.service: { name: prometheus-node-exporter, state: restarted }
