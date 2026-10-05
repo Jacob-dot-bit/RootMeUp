@@ -22,7 +22,7 @@ Configuration de l'hôte OVH `ns3092722` (Proxmox VE 9, Debian 13) qui héberge 
 | Supervision | node_exporter écoute uniquement sur `192.168.100.1:9100` (scrapé par Prometheus) | `monitoring` |
 | Stockage | Pool ZFS `data` (miroir NVMe) : `data/zd0` → `/var/lib/vz` (stockage `local`), `data/backups` → `/var/lib/vz/backups` (stockage `backups`, 2 sauvegardes gardées) | `storage` |
 | Accès Proxmox | Groupe `Admins` (evan, lucas, sarah @pve) avec le rôle `Administrator` sur `/` | `pve_access` |
-| Sauvegardes | vzdump de la VM 100 le dimanche à 01:00, mode stop, zstd | `backups` |
+| Sauvegardes | vzdump des VMs 100 et 101 le dimanche à 01:00, mode stop, zstd | `backups` |
 | VMs | Restauration de 100 et 101 depuis leurs archives vzdump | `guests` |
 
 ## Secrets
@@ -94,10 +94,9 @@ Chaque rôle a son tag (`--tags firewall`, `--tags fail2ban`…) pour n'applique
 
 ## Points d'attention
 
-- **La VM 101 (Grafana) n'est pas dans la sauvegarde hebdomadaire** : seule la VM 100 l'est.
-  Pour la redéployer, ajouter `101` à `backup_job.vmids` ou garder une archive à part.
-- **SSH root par mot de passe** encore autorisé (`ssh_password_authentication: true`).
-  Passer à `false` une fois que chaque administrateur a déposé sa clé.
+- **SSH par clé uniquement** (`ssh_password_authentication: false`) : chaque administrateur
+  doit avoir déposé sa clé publique dans `/etc/pve/priv/authorized_keys` (lien de
+  `/root/.ssh/authorized_keys`) avant d'appliquer le rôle `base`.
 - **Ports exposés hors administration** : `rpcbind` (`111`) et `postfix` (`25`) écoutent sur
   toutes les interfaces ; ils ne sont pas utilisés et peuvent être filtrés ou désactivés.
 - Appliquer le rôle `network` sur l'hôte en production recharge les interfaces : à faire
