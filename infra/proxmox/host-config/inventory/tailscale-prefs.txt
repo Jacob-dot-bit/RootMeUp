@@ -1,4 +1,1 @@
-	"ExitNodeID": "",
-	"RunSSH": true,
-	"AdvertiseRoutes": null,
-	"NetfilterMode": 2,
+tailscale non installé

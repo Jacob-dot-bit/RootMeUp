@@ -4,10 +4,10 @@
 # Seuls des fichiers sans secret sont copiés (liste blanche ci-dessous) :
 # /etc/pve/priv, les clés TLS/SSH, shadow.cfg et tfa.cfg ne sont jamais récupérés.
 #
-# Usage : ./export.sh [cible-ssh]      (défaut : root@ns3092722.tail8588a8.ts.net)
+# Usage : ./export.sh [cible-ssh]      (défaut : root@54.36.121.105)
 set -euo pipefail
 
-TARGET="${1:-root@ns3092722.tail8588a8.ts.net}"
+TARGET="${1:-root@54.36.121.105}"
 DEST="$(cd "$(dirname "$0")" && pwd)/host-config"
 
 FILES=(
@@ -58,7 +58,7 @@ ssh "$TARGET" "zpool list -H -o name,size,health; echo; zfs list -H -o name,moun
                                                                 > "$DEST/inventory/zfs.txt"
 ssh "$TARGET" "systemctl list-unit-files --state=enabled --no-legend --no-pager | awk '{print \$1}'" \
                                                                 > "$DEST/inventory/services-enabled.txt"
-ssh "$TARGET" "tailscale debug prefs | grep -E '\"(RunSSH|AdvertiseRoutes|ExitNodeID|NetfilterMode)\"'" \
+ssh "$TARGET" "if command -v tailscale >/dev/null; then tailscale debug prefs | grep -E '\"(RunSSH|AdvertiseRoutes|ExitNodeID|NetfilterMode)\"'; else echo 'tailscale non installé'; fi" \
                                                                 > "$DEST/inventory/tailscale-prefs.txt"
 
 # Garde-fou : refuse d'écrire un export contenant une clé privée ou un hash de mot de passe.

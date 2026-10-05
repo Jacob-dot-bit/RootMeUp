@@ -19,7 +19,7 @@ Configuration de l'hôte OVH `ns3092722` (Proxmox VE 9, Debian 13) qui héberge 
 | Réseau | `vmbr0` sur `eno1` (IP publique `54.36.121.105`, IPv6 `2001:41d0:203:1c69::1`), `vmbr1` interne `192.168.100.1/24` sans port physique | `network` |
 | Pare-feu | NAT de `192.168.100.0/24` vers Internet ; `22` et `8006` ouverts sur l'IP publique ; `3128` (SPICE) filtré sur l'IP publique | `firewall` |
 | fail2ban | Jails `sshd` et `proxmox` (5 échecs / 10 min = 1 h de ban), tailnet et `vmbr1` en liste blanche | `fail2ban` |
-| Tailscale | Nœud `ns3092722` du tailnet `tail8588a8`, Tailscale SSH activé | `tailscale` |
+| Tailscale | Désinstallé de l'hôte (administration par l'IP publique) ; réactivable avec `host_tailscale_enabled: true` | `tailscale` |
 | Supervision | node_exporter écoute uniquement sur `192.168.100.1:9100` (scrapé par Prometheus) | `monitoring` |
 | Stockage | Pool ZFS `data` (miroir NVMe) : `data/zd0` → `/var/lib/vz` (stockage `local`), `data/backups` → `/var/lib/vz/backups` (stockage `backups`, 2 sauvegardes gardées) | `storage` |
 | Accès Proxmox | Groupe `Admins` (evan, lucas, sarah @pve) avec le rôle `Administrator` sur `/` | `pve_access` |
@@ -69,10 +69,10 @@ ansible-vault encrypt ansible/secrets.yml
 
 ## Mettre à jour l'export
 
-Depuis une machine du tailnet (ou via l'IP publique) :
+Depuis un poste dont la clé SSH est autorisée pour root :
 
 ```bash
-./infra/proxmox/export.sh root@ns3092722.tail8588a8.ts.net
+./infra/proxmox/export.sh root@54.36.121.105
 ```
 
 Relire le diff de `host-config/` puis committer. Si une valeur a changé sur l'hôte, la

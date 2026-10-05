@@ -121,7 +121,6 @@ sqv
 ssh-import-id
 sudo
 sysvinit-utils
-tailscale
 tailscale-archive-keyring
 tar
 tcpdump

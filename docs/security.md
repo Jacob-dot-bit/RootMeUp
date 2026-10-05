@@ -11,7 +11,7 @@ Liste des exigences de sécurité appliquées :
 - Durcissement conforme au benchmark CIS Debian.
 - Cloisonnement des challenges via conteneurs Docker (un conteneur par équipe, géré par containerd).
 - Accès à la plateforme restreint au réseau Tailscale.
-- **Administration de l'hyperviseur Proxmox** : l'UI Proxmox (`8006`) et le SSH de l'hôte (`22`) sont accessibles sur l'IP publique `54.36.121.105` comme sur une installation standard, et restent joignables via Tailscale (`tailscale0`) et le réseau interne (`vmbr1`). Le proxy SPICE (`3128`) reste filtré sur l'interface publique (IPv4 et IPv6). La console KVM OVH reste l'accès de secours.
+- **Administration de l'hyperviseur Proxmox** : l'UI Proxmox (`8006`) et le SSH de l'hôte (`22`) sont accessibles sur l'IP publique `54.36.121.105` comme sur une installation standard, et via le réseau interne (`vmbr1`) ; Tailscale n'est plus installé sur l'hôte (les VMs restent sur le tailnet). Le proxy SPICE (`3128`) reste filtré sur l'interface publique (IPv4 et IPv6). La console KVM OVH reste l'accès de secours.
 - **Fail2Ban sur l'hyperviseur** : jails `sshd` et `proxmox` (échecs d'authentification de `pvedaemon`), 5 échecs en 10 min = bannissement 1 h ; le tailnet et `vmbr1` ne sont jamais bannis. Recommandé en complément : 2FA (TOTP) sur les comptes Proxmox et SSH root par clé uniquement.
 - **Configuration de l'hyperviseur versionnée** : export sans secrets dans [`infra/proxmox/`](../infra/proxmox/) (`/etc/pve/priv`, clés et hashes exclus) et redéploiement Ansible.
 - **HTTPS** : CTFd (TLS terminé par nginx) et Grafana (TLS via `tailscale serve`) — certificats Let's Encrypt, chiffrement des communications, aucun accès en clair.
