@@ -1,0 +1,12 @@
+[Unit]
+Description=Tunnel SSH vers MariaDB CTFd
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+ExecStart=/usr/bin/ssh -NT -o BatchMode=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i /etc/grafana-tunnel/id_ed25519 -L 127.0.0.1:3307:127.0.0.1:3306 tunnel@{{ ctf_vm_tailnet_ip }}
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

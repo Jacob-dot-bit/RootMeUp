@@ -1,0 +1,8 @@
+[Unit]
+Description=Heartbeat vers healthchecks.io (dead man's switch - detecte la panne totale du Proxmox)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/curl -fsS -m 10 --retry 3 {{ healthchecks_ping_url }}

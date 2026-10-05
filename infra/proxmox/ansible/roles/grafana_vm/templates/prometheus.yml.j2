@@ -1,0 +1,29 @@
+# {{ ansible_managed }}
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    scrape_interval: 5s
+    scrape_timeout: 5s
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: node
+    static_configs:
+      - targets: ['localhost:9100']
+
+  - job_name: ctf-vm
+    static_configs:
+      - targets: ['{{ ctf_vm_tailnet_ip }}:9100']
+
+  - job_name: proxmox-host
+    static_configs:
+      - targets: ['{{ lan_ipv4.split('/')[0] }}:9100']
+        labels: { instance: 'proxmox' }
+
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['{{ ctf_vm_tailnet_ip }}:8080']
+        labels: { instance: 'ctf-vm' }

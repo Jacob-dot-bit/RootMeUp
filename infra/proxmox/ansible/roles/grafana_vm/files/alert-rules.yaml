@@ -1,0 +1,248 @@
+apiVersion: 1
+groups:
+- orgId: 1
+  name: CTF
+  folder: Alertes CTF
+  interval: 1m
+  rules:
+  - uid: ctf_down
+    title: Serveur CTFd injoignable
+    condition: C
+    for: 1m
+    noDataState: Alerting
+    execErrState: Alerting
+    labels:
+      severity: critical
+    annotations:
+      summary: Le serveur CTFd (ctf-vm) ne repond plus a Prometheus.
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 300
+        to: 0
+      datasourceUid: prometheus
+      model:
+        expr: up{job="ctf-vm"}
+        instant: true
+        refId: A
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        type: threshold
+        expression: A
+        refId: C
+        conditions:
+        - evaluator:
+            type: lt
+            params:
+            - 1
+          operator:
+            type: and
+          query:
+            params:
+            - A
+          reducer:
+            type: last
+          type: query
+  - uid: ctf_disk
+    title: Disque presque plein (VM CTF)
+    condition: C
+    for: 5m
+    noDataState: OK
+    execErrState: Alerting
+    labels:
+      severity: warning
+    annotations:
+      summary: Un systeme de fichiers de la VM CTF depasse 85% (risque de crash CTFd,
+        cf T2).
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 300
+        to: 0
+      datasourceUid: prometheus
+      model:
+        expr: 100 - (node_filesystem_avail_bytes{job="ctf-vm",fstype=~"ext4|xfs"}
+          * 100 / node_filesystem_size_bytes{job="ctf-vm",fstype=~"ext4|xfs"})
+        instant: true
+        refId: A
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        type: threshold
+        expression: A
+        refId: C
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 85
+          operator:
+            type: and
+          query:
+            params:
+            - A
+          reducer:
+            type: last
+          type: query
+  - uid: ctf_ram
+    title: RAM haute (VM CTF)
+    condition: C
+    for: 5m
+    noDataState: OK
+    execErrState: Alerting
+    labels:
+      severity: warning
+    annotations:
+      summary: La RAM de la VM CTF depasse 90%.
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 300
+        to: 0
+      datasourceUid: prometheus
+      model:
+        expr: 100 * (1 - node_memory_MemAvailable_bytes{job="ctf-vm"} / node_memory_MemTotal_bytes{job="ctf-vm"})
+        instant: true
+        refId: A
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        type: threshold
+        expression: A
+        refId: C
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 90
+          operator:
+            type: and
+          query:
+            params:
+            - A
+          reducer:
+            type: last
+          type: query
+  - uid: pve_down
+    title: Hote Proxmox injoignable
+    condition: C
+    for: 1m
+    noDataState: Alerting
+    execErrState: Alerting
+    labels:
+      severity: critical
+      cible: proxmox
+    annotations:
+      summary: L hyperviseur Proxmox (192.168.100.1) ne repond plus a Prometheus.
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 300
+        to: 0
+      datasourceUid: prometheus
+      model:
+        expr: up{job="proxmox-host"}
+        instant: true
+        refId: A
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        type: threshold
+        expression: A
+        refId: C
+        conditions:
+        - evaluator:
+            type: lt
+            params:
+            - 1
+          operator:
+            type: and
+          query:
+            params:
+            - A
+          reducer:
+            type: last
+          type: query
+  - uid: pve_disk
+    title: Disque presque plein (hote Proxmox)
+    condition: C
+    for: 5m
+    noDataState: OK
+    execErrState: Alerting
+    labels:
+      severity: critical
+      cible: proxmox
+    annotations:
+      summary: Un systeme de fichiers de l hyperviseur Proxmox (dont /var/lib/vz en
+        ZFS) depasse 85%.
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 300
+        to: 0
+      datasourceUid: prometheus
+      model:
+        expr: 100 - (node_filesystem_avail_bytes{job="proxmox-host",fstype=~"ext4|xfs|zfs"}
+          * 100 / node_filesystem_size_bytes{job="proxmox-host",fstype=~"ext4|xfs|zfs"})
+        instant: true
+        refId: A
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        type: threshold
+        expression: A
+        refId: C
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 85
+          operator:
+            type: and
+          query:
+            params:
+            - A
+          reducer:
+            type: last
+          type: query
+  - uid: pve_ram
+    title: RAM haute (hote Proxmox)
+    condition: C
+    for: 5m
+    noDataState: OK
+    execErrState: Alerting
+    labels:
+      severity: warning
+      cible: proxmox
+    annotations:
+      summary: La RAM de l hyperviseur Proxmox depasse 90%.
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 300
+        to: 0
+      datasourceUid: prometheus
+      model:
+        expr: 100 * (1 - node_memory_MemAvailable_bytes{job="proxmox-host"} / node_memory_MemTotal_bytes{job="proxmox-host"})
+        instant: true
+        refId: A
+    - refId: C
+      datasourceUid: __expr__
+      model:
+        type: threshold
+        expression: A
+        refId: C
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 90
+          operator:
+            type: and
+          query:
+            params:
+            - A
+          reducer:
+            type: last
+          type: query

@@ -17,3 +17,9 @@
     - { role: pve_access, tags: [pve_access] }
     - { role: backups,    tags: [backups] }
     - { role: guests,     tags: [guests] }
+
+- name: VM de supervision (Grafana + Prometheus)
+  hosts: grafana
+  become: true
+  roles:
+    - { role: grafana_vm, tags: [grafana_vm] }

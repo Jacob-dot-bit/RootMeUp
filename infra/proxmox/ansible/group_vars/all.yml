@@ -72,3 +72,7 @@ backup_job:
 guests:
   - { vmid: 100, name: projet-annuel-rootmeup-ctf, archive: "" }
   - { vmid: 101, name: grafana, archive: "" }
+
+# --- VMs ------------------------------------------------------------------
+grafana_domain: grafana.tail8588a8.ts.net
+ctf_vm_tailnet_ip: 100.118.132.76

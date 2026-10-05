@@ -1,0 +1,32 @@
+# {{ ansible_managed }}
+apiVersion: 1
+contactPoints:
+- orgId: 1
+  name: Discord
+  receivers:
+  - uid: discord_ctf
+    type: discord
+    disableResolveMessage: false
+    settings:
+      url: {{ discord_webhook_ctf }}
+- orgId: 1
+  name: Discord-Proxmox
+  receivers:
+  - uid: discord_proxmox
+    type: discord
+    settings:
+      url: {{ discord_webhook_proxmox }}
+policies:
+- orgId: 1
+  receiver: Discord
+  group_by:
+  - alertname
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+  - receiver: Discord-Proxmox
+    object_matchers:
+    - - cible
+      - '='
+      - proxmox
